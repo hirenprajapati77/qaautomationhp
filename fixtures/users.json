@@ -1,0 +1,25 @@
+{
+  "users": {
+    "adminUser": {
+      "id": "adminUser",
+      "role": "admin",
+      "email": "hiren@innovuratech.com",
+      "otp": "135790",
+      "name": "Admin User"
+    },
+    "regularUser": {
+      "id": "regularUser",
+      "role": "user",
+      "email": "user@innovuratech.com",
+      "otp": "135790",
+      "name": "Regular User"
+    },
+    "guestUser": {
+      "id": "guestUser",
+      "role": "guest",
+      "email": "guest@innovuratech.com",
+      "otp": "135790",
+      "name": "Guest User"
+    }
+  }
+}

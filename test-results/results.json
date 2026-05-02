@@ -1,0 +1,199 @@
+{
+  "suites": [
+    {
+      "title": "from-sheet.spec.ts",
+      "suites": [
+        {
+          "title": "✓ POSITIVE CASES",
+          "specs": [
+            {
+              "title": "App loads successfully",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 1240
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Login page is accessible",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 890
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "✗ NEGATIVE CASES",
+          "specs": [
+            {
+              "title": "Login fails with wrong OTP",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 3200,
+                      "error": {
+                        "message": "expect(received).toBe(expected)\nExpected: false\nReceived: true\n  at LoginPage.isLoggedIn (pages/LoginPage.ts:42)"
+                      },
+                      "retry": 0
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Login fails with empty email",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 1100
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "◈ EDGE CASES",
+          "specs": [
+            {
+              "title": "SQL injection in email does not crash app",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 5100,
+                      "error": {
+                        "message": "TimeoutError: page.waitForLoadState: Timeout 30000ms exceeded.\nThe app returned HTTP 500 for SQL injection input."
+                      },
+                      "retry": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "XSS payload in email is handled safely",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 980
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Max length email handled gracefully",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 2800,
+                      "error": {
+                        "message": "Error: Element not found: input[type=\"text\"], input[type=\"email\"]\nCheck your selector — form field may have changed."
+                      },
+                      "retry": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "GRID FUNCTIONALITY",
+          "specs": [
+            {
+              "title": "Grid displays all users correctly",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 2100
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Column sorting A-Z functionality",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 1800
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Column sorting Z-A functionality",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "passed",
+                      "duration": 1750
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Column text filtering",
+              "file": "tests/from-sheet.spec.ts",
+              "tests": [
+                {
+                  "results": [
+                    {
+                      "status": "failed",
+                      "duration": 3200,
+                      "error": {
+                        "message": "expect(received).toBe(expected)\nExpected: 5\nReceived: 12\n  at GridPage.verifyFilter (pages/GridPage.ts:89)"
+                      },
+                      "retry": 0
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
