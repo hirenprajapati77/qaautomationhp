@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QA Forge — Complete Studio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800;900&display=swap');
+
+:root {
+  --bg:      #060810;
+  --s1:      #0b0f1a;
+  --s2:      #101520;
+  --s3:      #161d2e;
+  --border:  #1a2438;
+  --border2: #243350;
+  --cyan:    #00e5ff;
+  --green:   #00e676;
+  --red:     #ff1744;
+  --amber:   #ffab00;
+  --purple:  #d500f9;
+  --blue:    #2979ff;
+  --text:    #e3eeff;
+  --muted:   #3a5070;
+  --muted2:  #1e3048;
+  --mono:    'DM Mono', monospace;
+  --display: 'Syne', sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;display:flex;flex-direction:column;height:100vh}
+
+/* grid bg */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* ── NAV ── */
+nav{position:relative;z-index:100;height:52px;background:rgba(6,8,16,.96);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;flex-shrink:0;backdrop-filter:blur(16px)}
+
+.nav-logo{display:flex;align-items:center;gap:10px;padding:0 24px;border-right:1px solid var(--border);height:100%;flex-shrink:0}
+.logo-hex{width:28px;height:28px;background:linear-gradient(135deg,var(--cyan),var(--blue));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
+.logo-txt{font-family:var(--display);font-weight:900;font-size:17px;letter-spacing:-0.5px;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.nav-steps{display:flex;height:100%;overflow-x:auto}
+.nav-step{display:flex;align-items:center;gap:10px;padding:0 20px;cursor:pointer;
+  border-right:1px solid var(--border);border-bottom:2px solid transparent;
+  color:var(--muted);font-size:10px;letter-spacing:1.5px;white-space:nowrap;
+  transition:all .2s;user-select:none;flex-shrink:0}
+.nav-step:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.nav-step.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,229,255,.04)}
+.nav-step.done{color:var(--green)}
+.step-num{width:20px;height:20px;border-radius:50%;border:1px solid currentColor;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding:0 20px}
+.nav-badge{padding:3px 10px;border-radius:3px;font-size:9px;letter-spacing:1px;font-weight:700}
+
+/* ── PAGES ── */
+.page{position:relative;z-index:1;flex:1;overflow:hidden;display:none;flex-direction:column}
+.page.active{display:flex}
+
+/* ── SHARED: SCROLLABLE CONTENT ── */
+.scroll{overflow-y:auto;flex:1;padding:32px 24px}
+.scroll::-webkit-scrollbar{width:4px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.center{max-width:760px;margin:0 auto}
+
+/* ── CARD ── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.card:nth-child(2){animation-delay:.05s}.card:nth-child(3){animation-delay:.1s}
+
+.card-head{display:flex;align-items:center;gap:12px;padding:16px 22px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border)}
+.card-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.card-title{font-family:var(--display);font-weight:700;font-size:14px;color:#fff}
+.card-sub{font-size:9px;color:var(--muted);letter-spacing:1.5px;margin-top:1px}
+.card-body{padding:22px}
+
+/* ── SECTION TITLE ── */
+.sec{font-family:var(--display);font-weight:700;font-size:11px;color:var(--cyan);letter-spacing:2px;
+  margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec:first-child{margin-top:0}
+
+/* ── DROP ZONE ── */
+.drop{border:2px dashed var(--border2);border-radius:12px;padding:44px 24px;text-align:center;
+  cursor:pointer;transition:all .2s;background:rgba(255,255,255,.01)}
+.drop:hover,.drop.drag{border-color:var(--cyan);background:rgba(0,229,255,.03)}
+.drop-emoji{font-size:38px;margin-bottom:12px;display:block}
+.drop-title{font-family:var(--display);font-weight:700;font-size:15px;margin-bottom:5px}
+.drop-hint{font-size:11px;color:var(--muted)}
+.drop-fmts{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.fmt{padding:2px 9px;border-radius:3px;border:1px solid var(--border2);font-size:9px;color:var(--muted);letter-spacing:1px}
+
+/* ── FILE ACCEPTED ── */
+.file-ok{display:flex;align-items:center;gap:14px;background:rgba(0,230,118,.06);
+  border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:14px 18px;margin-top:12px}
+.file-ok-name{color:var(--green);font-weight:700;font-size:13px}
+.file-ok-meta{color:var(--muted);font-size:10px;margin-top:2px}
+.file-change{margin-left:auto;font-size:10px;color:var(--muted);cursor:pointer;text-decoration:underline}
+.file-change:hover{color:var(--cyan)}
+
+/* ── STATS ROW ── */
+.stats{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.stat{flex:1;min-width:80px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center}
+.stat-n{font-family:var(--display);font-size:22px;font-weight:800}
+.stat-l{font-size:8px;letter-spacing:2px;color:var(--muted);margin-top:2px}
+
+/* ── PREVIEW TABLE ── */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;margin-top:14px;max-height:200px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:10px}
+thead th{background:var(--s2);padding:7px 12px;text-align:left;color:var(--muted);letter-spacing:1px;
+  font-size:9px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+tbody td{padding:6px 12px;border-bottom:1px solid rgba(26,36,56,.6);color:#94a3b8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp{display:inline-block;padding:1px 6px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:1px}
+.tp-positive{background:rgba(0,230,118,.1);color:var(--green)}
+.tp-negative{background:rgba(255,23,68,.1);color:var(--red)}
+.tp-edge{background:rgba(255,171,0,.1);color:var(--amber)}
+
+/* ── FORM ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2.full{grid-column:1/-1}
+.field label{display:block;font-size:9px;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px}
+.field label span{color:var(--red)}
+.inp,.sel{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;transition:border-color .15s}
+.inp:focus,.sel:focus{border-color:var(--cyan)}
+.inp::placeholder{color:var(--muted2)}
+.hint{font-size:9px;color:var(--muted2);margin-top:3px}
+
+/* ── USER ROW ── */
+.user-row{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.user-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.user-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.del-btn{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1}
+.del-btn:hover{color:var(--red)}
+.add-user{width:100%;padding:9px;border:1px dashed var(--border2);border-radius:7px;
+  background:transparent;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s}
+.add-user:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.03)}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.btn-primary{flex:1;padding:13px;border:none;border-radius:9px;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  color:#000;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.5px;
+  cursor:pointer;transition:opacity .2s;position:relative;overflow:hidden}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 50%,rgba(255,255,255,.15))}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.3;cursor:not-allowed}
+.btn-back{padding:13px 22px;border-radius:9px;border:1px solid var(--border2);background:transparent;
+  color:var(--muted);font-family:var(--mono);font-size:11px;cursor:pointer;transition:all .15s}
+.btn-back:hover{border-color:var(--muted);color:var(--text)}
+.btn-sm{padding:6px 14px;border-radius:6px;border:1px solid var(--border2);background:transparent;
+  color:var(--muted);cursor:pointer;font-size:10px;font-family:var(--mono);transition:all .15s}
+.btn-sm:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-sm.primary-sm{border-color:rgba(0,229,255,.4);background:rgba(0,229,255,.08);color:var(--cyan)}
+
+/* ── FILE TREE ── */
+.tree{padding:6px 0}
+.tree-folder{display:flex;align-items:center;gap:8px;padding:5px 16px;color:var(--amber);font-size:11px;font-weight:700}
+.tree-file{display:flex;align-items:center;gap:7px;padding:5px 16px 5px 32px;font-size:10px;
+  color:var(--muted);cursor:pointer;border-radius:4px;transition:all .1s}
+.tree-file:hover{background:var(--s2);color:var(--text)}
+.tree-file.active{background:rgba(0,229,255,.08);color:var(--cyan)}
+
+/* ── CODE BLOCK ── */
+.code-wrap{background:#050709;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:14px}
+.code-top{background:var(--s2);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.dots{display:flex;gap:5px}.dot{width:10px;height:10px;border-radius:50%}
+.code-file{color:var(--muted);font-size:10px;margin-left:6px;flex:1}
+code-pre,pre{margin:0;padding:14px 18px;font-size:11px;line-height:1.8;overflow-x:auto;
+  max-height:360px;overflow-y:auto;font-family:var(--mono);color:#abb2bf}
+
+/* ── SUCCESS BANNER ── */
+.success{background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.2);border-radius:12px;padding:18px 22px;
+  margin-bottom:16px;display:flex;align-items:flex-start;gap:14px}
+.success-icon{font-size:26px;flex-shrink:0}
+.success-title{font-family:var(--display);font-weight:700;font-size:14px;color:var(--green);margin-bottom:5px}
+.success-body{font-size:11px;color:#86efac;line-height:1.8}
+.success-body code{color:var(--cyan);background:rgba(0,229,255,.08);padding:1px 5px;border-radius:3px}
+
+/* ── RUNNER PAGE ── */
+.runner-layout{display:flex;flex:1;overflow:hidden}
+.runner-left{width:400px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.runner-scroll{overflow-y:auto;flex:1}
+.runner-scroll::-webkit-scrollbar{width:4px}
+.runner-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.runner-foot{padding:14px 16px;border-top:1px solid var(--border);background:var(--s1);flex-shrink:0}
+
+.rsec-head{display:flex;align-items:center;gap:8px;padding:10px 16px;font-size:9px;letter-spacing:2px;
+  color:var(--muted);background:var(--s1);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.rsec-head:hover{color:var(--text)}
+.rsec-body{padding:12px 16px;background:var(--s2);border-bottom:1px solid var(--border)}
+
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.mode-card{border:1px solid var(--border2);border-radius:8px;padding:10px 12px;cursor:pointer;
+  transition:all .15s;background:var(--s1);position:relative}
+.mode-card:hover{border-color:var(--muted)}
+.mode-card.sel{border-color:var(--cyan);background:rgba(0,229,255,.05)}
+.mode-card-icon{font-size:16px;margin-bottom:4px}
+.mode-card-label{font-size:11px;font-weight:700;color:var(--text)}
+.mode-card-sub{font-size:9px;color:var(--muted)}
+.mode-chk{position:absolute;top:7px;right:7px;width:14px;height:14px;border-radius:50%;
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:8px}
+.mode-card.sel .mode-chk{background:var(--cyan);border-color:var(--cyan);color:#000;font-weight:700}
+
+.type-pills{display:flex;gap:6px;flex-wrap:wrap}
+.tpill{padding:5px 11px;border-radius:4px;border:1px solid var(--border2);
+  font-size:9px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .15s;background:var(--s1)}
+.tpill:hover{border-color:var(--muted)}
+.tpill.sp{background:rgba(0,230,118,.1);border-color:var(--green);color:var(--green)}
+.tpill.sn{background:rgba(255,23,68,.1);border-color:var(--red);color:var(--red)}
+.tpill.se{background:rgba(255,171,0,.1);border-color:var(--amber);color:var(--amber)}
+.tpill.sd{background:rgba(41,121,255,.1);border-color:var(--blue);color:var(--blue)}
+
+.user-chips{display:flex;flex-direction:column;gap:6px}
+.uchip{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;
+  border:1px solid var(--border2);cursor:pointer;transition:all .15s;background:var(--s1)}
+.uchip:hover{border-color:var(--muted)}
+.uchip.sel{border-color:var(--purple);background:rgba(213,0,249,.06)}
+.uav{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.uname{font-size:11px;flex:1}
+.urole{font-size:9px;color:var(--muted)}
+.uchk{color:var(--purple);opacity:0;font-size:11px;transition:opacity .15s}
+.uchip.sel .uchk{opacity:1}
+
+.case-search{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:6px;
+  padding:7px 10px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none;margin-bottom:8px}
+.case-search:focus{border-color:var(--cyan)}
+.case-list{max-height:160px;overflow-y:auto}
+.case-item{display:flex;align-items:flex-start;gap:7px;padding:6px 4px;border-radius:4px;cursor:pointer}
+.case-item:hover{background:rgba(255,255,255,.03)}
+.case-item input{margin-top:2px;accent-color:var(--cyan);flex-shrink:0}
+.case-t{font-size:10px;color:var(--text);line-height:1.4}
+.case-badge{font-size:7px;font-weight:700;letter-spacing:1px;padding:1px 4px;border-radius:2px;flex-shrink:0;margin-top:2px}
+
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt-f label{display:block;font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.opt-sel,.opt-inp{width:100%;background:var(--s1);border:1px solid var(--border2);border-radius:5px;
+  padding:6px 9px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none}
+.opt-sel:focus,.opt-inp:focus{border-color:var(--cyan)}
+
+.cmd-preview{background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:9px 12px;margin-bottom:10px;font-size:10px;color:var(--cyan);word-break:break-all;line-height:1.6}
+.cmd-label{font-size:8px;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.run-btn{width:100%;padding:12px;border:none;border-radius:8px;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  color:#000;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:2px;
+  cursor:pointer;transition:opacity .2s}
+.run-btn:hover{opacity:.9}
+.run-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── TERMINAL ── */
+.term-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.term-head{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);background:var(--s1);flex-shrink:0}
+.term-title{font-size:9px;letter-spacing:2px;color:var(--muted)}
+.term-acts{margin-left:auto;display:flex;gap:6px}
+.term{flex:1;overflow-y:auto;padding:14px 18px;background:var(--bg);font-size:11px;line-height:1.8}
+.term::-webkit-scrollbar{width:4px}
+.term::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.tl{display:flex;gap:8px;margin-bottom:1px;animation:fadeIn .1s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(2px)}to{opacity:1}}
+.tt{color:var(--muted);font-size:9px;padding-top:1px;flex-shrink:0;min-width:56px}
+.tx{flex:1;word-break:break-word}
+.tc{color:var(--cyan)}.tg{color:var(--green)}.tr{color:var(--red)}.ta{color:var(--amber)}
+.tp2{color:#c678dd}.td{color:var(--muted)}.tw{color:#fff;font-weight:700}
+.cursor-blink{display:inline-block;width:7px;height:13px;background:var(--cyan);
+  animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.res-bar{border-top:1px solid var(--border);padding:10px 16px;background:var(--s1);
+  display:none;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0}
+.res-bar.show{display:flex}
+.rn{font-family:var(--display);font-size:20px;font-weight:800}
+.rl{font-size:8px;letter-spacing:1px;color:var(--muted)}
+
+/* ── BUG REPORT PAGE ── */
+.bug-layout{display:flex;flex:1;overflow:hidden}
+.bug-left{width:300px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:16px}
+.bug-right{flex:1;overflow-y:auto;padding:20px 24px}
+
+.sev-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.sev-card{border-radius:8px;padding:10px 14px;text-align:center;cursor:pointer;border:1px solid;transition:all .15s}
+.sev-n{font-family:var(--display);font-size:20px;font-weight:800}
+.sev-l{font-size:8px;letter-spacing:1px;opacity:.8}
+
+.bug-row{background:var(--s1);border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden}
+.bug-hd{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s}
+.bug-hd:hover{background:var(--s2)}
+.bug-id{color:var(--muted);font-size:10px;min-width:55px}
+.bug-ttl{flex:1;font-size:12px;color:var(--text)}
+.bug-dur{color:var(--muted);font-size:10px}
+.bug-body{border-top:1px solid var(--border);padding:12px 14px;background:rgba(0,0,0,.3);display:none}
+.bug-body.open{display:block}
+.bug-err{background:#0d1117;border:1px solid #21262d;border-radius:5px;padding:9px 12px;
+  color:#f85149;font-size:10px;white-space:pre-wrap;overflow-x:auto;margin-bottom:10px}
+.bug-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.bm label{color:var(--muted);font-size:8px;letter-spacing:1px;display:block}
+.bm span{color:#94a3b8;font-size:11px}
+.fix-box{background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.15);border-radius:6px;padding:9px 12px}
+.fix-title{color:var(--green);font-size:10px;font-weight:700;margin-bottom:3px}
+.fix-text{color:#86efac;font-size:11px}
+
+.sev-badge{border-radius:3px;padding:2px 7px;font-size:9px;font-weight:800;letter-spacing:1px;display:inline-block}
+.type-icon{font-size:12px;font-weight:700}
+
+/* ── UPLOAD RESULTS ── */
+.results-drop{border:2px dashed var(--border2);border-radius:10px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s}
+.results-drop:hover,.results-drop.drag{border-color:var(--cyan);background:rgba(0,229,255,.03)}
+
+/* ── DONUT ── */
+.donut-wrap{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.donut-legend{display:flex;flex-direction:column;gap:6px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:10px}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-hex"></div>
+    <span class="logo-txt">QA FORGE</span>
+  </div>
+  <div class="nav-steps" id="navSteps">
+    <div class="nav-step active" data-page="upload" onclick="goPage('upload')">
+      <div class="step-num">1</div> UPLOAD SHEET
+    </div>
+    <div class="nav-step" data-page="config" onclick="goPage('config')">
+      <div class="step-num">2</div> CONFIGURE
+    </div>
+    <div class="nav-step" data-page="generate" onclick="goPage('generate')">
+      <div class="step-num">3</div> GENERATE
+    </div>
+    <div class="nav-step" data-page="runner" onclick="goPage('runner')">
+      <div class="step-num">4</div> RUN TESTS
+    </div>
+    <div class="nav-step" data-page="bugs" onclick="goPage('bugs')">
+      <div class="step-num">5</div> BUG REPORT
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge" id="tcBadge" style="background:rgba(0,229,255,.1);color:var(--cyan);display:none"></span>
+    <span style="width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite" id="statusDot"></span>
+    <span style="font-size:9px;color:var(--muted);letter-spacing:1px" id="statusTxt">READY</span>
+  </div>
+</nav>
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PAGE 1: UPLOAD -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="page active" id="page-upload">
+  <div class="scroll"><div class="center">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="background:rgba(0,229,255,.1)">📋</div>
+        <div><div class="card-title">Upload Test Case Sheet</div>
+          <div class="card-sub">EXCEL / CSV / ODS — AUTO COLUMN DETECTION</div></div>
+      </div>
+      <div class="card-body">
+        <div class="drop" id="dz1" onclick="document.getElementById('fi1').click()">
+          <span class="drop-emoji">📂</span>
+          <div class="drop-title" id="dz1title">Drop your sheet here</div>
+          <div class="drop-hint">Drag & drop or click to browse</div>
+          <div class="drop-fmts">
+            <span class="fmt">.XLSX</span><span class="fmt">.XLS</span>
+            <span class="fmt">.CSV</span><span class="fmt">.ODS</span>
+          </div>
+        </div>
+        <input type="file" id="fi1" accept=".xlsx,.xls,.csv,.ods" style="display:none" onchange="onSheet(event)"/>
+        <div id="fileOk" style="display:none" class="file-ok">
+          <span style="font-size:22px">✅</span>
+          <div><div class="file-ok-name" id="fName"></div>
+            <div class="file-ok-meta" id="fMeta"></div></div>
+          <span class="file-change" onclick="document.getElementById('fi1').click()">Change</span>
+        </div>
+        <div id="statsRow" style="display:none" class="stats">
+          <div class="stat"><div class="stat-n" id="stTotal" style="color:var(--text)">0</div><div class="stat-l">TOTAL</div></div>
+          <div class="stat"><div class="stat-n" id="stPos" style="color:var(--green)">0</div><div class="stat-l">POSITIVE</div></div>
+          <div class="stat"><div class="stat-n" id="stNeg" style="color:var(--red)">0</div><div class="stat-l">NEGATIVE</div></div>
+          <div class="stat"><div class="stat-n" id="stEdge" style="color:var(--amber)">0</div><div class="stat-l">EDGE</div></div>
+        </div>
+        <div id="previewWrap" style="display:none" class="tbl-wrap" id="previewTbl"></div>
+        <div id="uploadActions" style="display:none;margin-top:20px">
+          <button class="btn-primary" onclick="goPage('config')">Next: Configure Environment →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="background:rgba(255,171,0,.1)">📌</div>
+        <div><div class="card-title">Expected Column Names</div>
+          <div class="card-sub">FLEXIBLE — EXACT MATCH NOT REQUIRED</div></div>
+      </div>
+      <div class="card-body">
+        ${[['type','type, category, test type','positive / negative / edge'],
+           ['title','title, name, test name, scenario','required'],
+           ['steps','steps, test steps, actions',''],
+           ['expected','expected, expected result, outcome',''],
+           ['priority','priority, severity','High / Medium / Low']
+          ].map(([f,ex,note])=>`
+          <div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);align-items:center">
+            <span style="color:var(--cyan);font-weight:700;font-size:10px;min-width:70px">${f}</span>
+            <span style="color:var(--muted);font-size:10px;flex:1">${ex}</span>
+            ${note?`<span style="color:var(--muted2);font-size:9px">${note}</span>`:''}
+          </div>`).join('')}
+      </div>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PAGE 2: CONFIG -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="page" id="page-config">
+  <div class="scroll"><div class="center">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon" style="background:rgba(41,121,255,.1)">⚙️</div>
+        <div><div class="card-title">Environment Configuration</div>
+          <div class="card-sub">BECOMES YOUR .ENV + PLAYWRIGHT CONFIG</div></div>
+      </div>
+      <div class="card-body">
+        <div class="sec">🌐 APPLICATION</div>
+        <div class="grid2">
+          <div class="field" style="grid-column:1/-1">
+            <label>BASE URL <span>*</span></label>
+            <input class="inp" id="cfgUrl" value="https://yourapp.com" placeholder="https://your-app.com" oninput="APP.env.baseUrl=this.value"/>
+            <div class="hint">URL of the application under test</div>
+          </div>
+          <div class="field">
+            <label>ENVIRONMENT</label>
+            <select class="sel" onchange="APP.env.testEnv=this.value">
+              <option value="staging" selected>staging</option>
+              <option value="dev">dev</option>
+              <option value="qa">qa</option>
+              <option value="production">production</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>BROWSER</label>
+            <select class="sel" onchange="APP.env.browser=this.value">
+              <option value="chromium" selected>chromium</option>
+              <option value="firefox">firefox</option>
+              <option value="webkit">webkit</option>
+              <option value="all">all browsers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sec">🔧 PLAYWRIGHT SETTINGS</div>
+        <div class="grid2">
+          <div class="field">
+            <label>HEADLESS</label>
+            <select class="sel" onchange="APP.env.headless=this.value">
+              <option value="true">true (no window)</option>
+              <option value="false">false (show browser)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>SLOW MO (ms)</label>
+            <input class="inp" value="0" placeholder="0" oninput="APP.env.slowMo=this.value"/>
+          </div>
+          <div class="field">
+            <label>TIMEOUT (ms)</label>
+            <input class="inp" value="30000" oninput="APP.env.timeout=this.value"/>
+          </div>
+          <div class="field">
+            <label>RETRIES</label>
+            <select class="sel" onchange="APP.env.retries=this.value">
+              <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>WORKERS</label>
+            <select class="sel" onchange="APP.env.workers=this.value">
+              <option value="1">1 (serial)</option><option value="2" selected>2</option><option value="4">4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sec">👥 TEST USERS</div>
+        <div id="usersContainer"></div>
+        <button class="add-user" onclick="addUser()">+ Add Another User Role</button>
+
+        <div class="btn-row">
+          <button class="btn-back" onclick="goPage('upload')">← Back</button>
+          <button class="btn-primary" onclick="generateFiles()">⚡ Generate Playwright Project</button>
+        </div>
+      </div>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PAGE 3: GENERATE -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="page" id="page-generate">
+  <div style="display:flex;flex:1;overflow:hidden">
+    <!-- file tree -->
+    <div style="width:220px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:var(--s1)">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:2px;color:var(--muted)">PROJECT FILES</div>
+      <div class="tree" id="fileTree"></div>
+      <div style="padding:12px 16px;border-top:1px solid var(--border);margin-top:8px;display:flex;flex-direction:column;gap:7px">
+        <button class="btn-sm primary-sm" onclick="downloadSetup()" style="width:100%">⬇ setup-qa.sh</button>
+        <button class="btn-sm" onclick="downloadEnv()" style="width:100%">⬇ .env file</button>
+        <button class="btn-sm" onclick="goPage('runner')" style="width:100%;color:var(--cyan);border-color:rgba(0,229,255,.3)">▶ Go to Runner →</button>
+        <button class="btn-sm" onclick="goPage('upload')" style="width:100%">← Start Over</button>
+      </div>
+    </div>
+    <!-- code viewer -->
+    <div style="flex:1;overflow-y:auto;padding:20px 24px">
+      <div id="generateSuccess"></div>
+      <div class="code-wrap">
+        <div class="code-top">
+          <div class="dots"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#ffbd2e"></div><div class="dot" style="background:#28ca42"></div></div>
+          <span class="code-file" id="codeFilename">—</span>
+          <button class="btn-sm" onclick="copyActiveFile()" id="copyFileBtn">Copy</button>
+        </div>
+        <pre id="codeContent" style="color:#abb2bf"></pre>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head" style="padding:12px 18px"><div class="card-title" style="font-size:12px">▶ RUN COMMANDS</div></div>
+        <div style="padding:14px 18px">
+          ${[['Install dependencies','npm install -D @playwright/test dotenv xlsx'],
+             ['Install browsers','npx playwright install chromium firefox'],
+             ['Run all tests','npx playwright test'],
+             ['Run headed','npx playwright test --headed'],
+             ['View report','npx playwright show-report']
+            ].map(([l,c])=>`<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);align-items:center">
+              <span style="color:var(--muted);font-size:10px;min-width:150px">${l}</span>
+              <code style="color:var(--cyan);font-size:10px">${c}</code>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PAGE 4: RUNNER -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="page" id="page-runner">
+  <div class="runner-layout">
+    <!-- LEFT -->
+    <div class="runner-left">
+      <div class="runner-scroll">
+
+        <!-- What to run -->
+        <div class="rsec-head" onclick="toggleRSec(this)">
+          <span style="flex:1">01 / WHAT TO RUN</span><span>›</span>
+        </div>
+        <div class="rsec-body">
+          <div class="mode-grid" id="modeGrid">
+            <div class="mode-card sel" data-mode="all" onclick="selMode('all',this)">
+              <div class="mode-chk">✓</div><div class="mode-card-icon">🚀</div>
+              <div class="mode-card-label">All Tests</div><div class="mode-card-sub">Entire suite</div>
+            </div>
+            <div class="mode-card" data-mode="type" onclick="selMode('type',this)">
+              <div class="mode-chk"></div><div class="mode-card-icon">🎯</div>
+              <div class="mode-card-label">By Type</div><div class="mode-card-sub">+/- / Edge</div>
+            </div>
+            <div class="mode-card" data-mode="user" onclick="selMode('user',this)">
+              <div class="mode-chk"></div><div class="mode-card-icon">👤</div>
+              <div class="mode-card-label">By User Role</div><div class="mode-card-sub">Admin/User/Guest</div>
+            </div>
+            <div class="mode-card" data-mode="specific" onclick="selMode('specific',this)">
+              <div class="mode-chk"></div><div class="mode-card-icon">🔍</div>
+              <div class="mode-card-label">Specific Cases</div><div class="mode-card-sub">Pick tests</div>
+            </div>
+            <div class="mode-card" data-mode="smoke" onclick="selMode('smoke',this)">
+              <div class="mode-chk"></div><div class="mode-card-icon">💨</div>
+              <div class="mode-card-label">Smoke Only</div><div class="mode-card-sub">Quick check</div>
+            </div>
+            <div class="mode-card" data-mode="failed" onclick="selMode('failed',this)">
+              <div class="mode-chk"></div><div class="mode-card-icon">🔁</div>
+              <div class="mode-card-label">Re-run Failed</div><div class="mode-card-sub">Last failures</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type filter -->
+        <div id="rTypeSection" style="display:none">
+          <div class="rsec-head" onclick="toggleRSec(this)"><span style="flex:1">02 / TEST TYPES</span><span>›</span></div>
+          <div class="rsec-body">
+            <div class="type-pills">
+              <div class="tpill" data-type="positive" onclick="togType('positive',this)">✓ POSITIVE</div>
+              <div class="tpill" data-type="negative" onclick="togType('negative',this)">✗ NEGATIVE</div>
+              <div class="tpill" data-type="edge"     onclick="togType('edge',this)">◈ EDGE</div>
+              <div class="tpill" data-type="datadriven" onclick="togType('datadriven',this)">🔄 DATA-DRIVEN</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User filter -->
+        <div id="rUserSection" style="display:none">
+          <div class="rsec-head" onclick="toggleRSec(this)"><span style="flex:1">02 / USER ROLES</span><span>›</span></div>
+          <div class="rsec-body"><div class="user-chips" id="runnerUserChips"></div></div>
+        </div>
+
+        <!-- Specific cases -->
+        <div id="rSpecSection" style="display:none">
+          <div class="rsec-head" onclick="toggleRSec(this)"><span style="flex:1">02 / PICK CASES</span><span>›</span></div>
+          <div class="rsec-body">
+            <input class="case-search" placeholder="Search..." oninput="filterRunCases(this.value)"/>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <button class="btn-sm" onclick="selectAllRun()">All</button>
+              <button class="btn-sm" onclick="clearAllRun()">None</button>
+              <span style="margin-left:auto;font-size:9px;color:var(--muted)" id="runSelCount">0 selected</span>
+            </div>
+            <div class="case-list" id="runCaseList"></div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="rsec-head" onclick="toggleRSec(this)"><span style="flex:1">OPTIONS</span><span>›</span></div>
+        <div class="rsec-body">
+          <div class="opts-grid">
+            <div class="opt-f"><label>BROWSER</label>
+              <select class="opt-sel" id="rBrowser" onchange="buildCmd()">
+                <option value="">All</option><option value="chromium" selected>chromium</option>
+                <option value="firefox">firefox</option><option value="webkit">webkit</option>
+              </select>
+            </div>
+            <div class="opt-f"><label>MODE</label>
+              <select class="opt-sel" id="rHeaded" onchange="buildCmd()">
+                <option value="">headless</option><option value="--headed">headed</option>
+              </select>
+            </div>
+            <div class="opt-f"><label>WORKERS</label>
+              <select class="opt-sel" id="rWorkers" onchange="buildCmd()">
+                <option value="">default</option><option value="--workers=1">1</option>
+                <option value="--workers=2">2</option><option value="--workers=4">4</option>
+              </select>
+            </div>
+            <div class="opt-f"><label>RETRIES</label>
+              <select class="opt-sel" id="rRetries" onchange="buildCmd()">
+                <option value="">0</option><option value="--retries=1">1</option><option value="--retries=2">2</option>
+              </select>
+            </div>
+          </div>
+          <div class="opt-f" style="margin-top:8px"><label>GREP PATTERN</label>
+            <input class="opt-inp" id="rGrep" placeholder="e.g. login, @smoke" oninput="buildCmd()"/>
+          </div>
+        </div>
+
+      </div><!-- end runner-scroll -->
+
+      <div class="runner-foot">
+        <div class="cmd-label">GENERATED COMMAND</div>
+        <div class="cmd-preview" id="cmdPreview">npx playwright test</div>
+        <button class="run-btn" onclick="doRun()">▶  RUN TESTS</button>
+      </div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="term-wrap">
+      <div class="term-head">
+        <span class="term-title">TERMINAL OUTPUT</span>
+        <div class="term-acts">
+          <button class="btn-sm" onclick="clearTerm()">Clear</button>
+          <button class="btn-sm" onclick="copyTerm()">Copy</button>
+          <button class="btn-sm primary-sm" onclick="goPage('bugs')">→ Bug Report</button>
+        </div>
+      </div>
+      <div class="term" id="term">
+        <div class="tl"><span class="tt">--:--:--</span><span class="tx tp2">╔═══════════════════════════════╗</span></div>
+        <div class="tl"><span class="tt">--:--:--</span><span class="tx tp2">║  QA FORGE  Interactive Runner ║</span></div>
+        <div class="tl"><span class="tt">--:--:--</span><span class="tx tp2">╚═══════════════════════════════╝</span></div>
+        <div class="tl"><span class="tt">--:--:--</span><span class="tx td">Select options on the left → click RUN</span></div>
+        <div class="tl"><span class="tt">--:--:--</span><span class="tx td">Command copies to clipboard automatically</span></div>
+        <div class="tl" id="termCursor"><span class="tt">--:--:--</span><span class="tx td">$ <span class="cursor-blink"></span></span></div>
+      </div>
+      <div class="res-bar" id="resBar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- PAGE 5: BUG REPORT -->
+<!-- ════════════════════════════════════════════════ -->
+<div class="page" id="page-bugs">
+  <div class="bug-layout">
+    <!-- left: upload + filters -->
+    <div class="bug-left">
+      <div id="bugUploadArea">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:10px">LOAD RESULTS</div>
+        <div class="results-drop" id="rdz" onclick="document.getElementById('rfi').click()">
+          <div style="font-size:28px;margin-bottom:8px">📁</div>
+          <div style="font-family:var(--display);font-weight:700;font-size:13px;margin-bottom:4px">Drop results.json</div>
+          <div style="font-size:10px;color:var(--muted)">From test-results/results.json</div>
+        </div>
+        <input type="file" id="rfi" accept=".json" style="display:none" onchange="onResults(event)"/>
+        <button class="btn-sm" style="width:100%;margin-top:8px" onclick="loadDemoResults()">▶ Load Demo</button>
+        <div style="margin-top:14px;font-size:9px;color:var(--muted2);line-height:1.7">
+          Run tests first:<br/>
+          <code style="color:var(--cyan)">npx playwright test</code><br/>
+          Then upload:<br/>
+          <code style="color:var(--cyan)">test-results/results.json</code>
+        </div>
+      </div>
+      <div id="bugFilters" style="display:none">
+        <div style="font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:10px">SEVERITY</div>
+        <div class="sev-grid" id="sevGrid"></div>
+        <div style="font-size:9px;letter-spacing:2px;color:var(--muted);margin:12px 0 8px">FILTER BY TYPE</div>
+        <div class="type-pills" id="bugTypeFilters"></div>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px">
+          <button class="btn-sm primary-sm" onclick="exportBugExcel()" style="width:100%">⬇ Export CSV</button>
+          <button class="btn-sm primary-sm" onclick="exportBugHTML()" style="width:100%">⬇ Export HTML</button>
+          <button class="btn-sm" onclick="resetBugReport()" style="width:100%">↩ New Results</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: donut + bug list -->
+    <div class="bug-right" id="bugRight">
+      <div style="text-align:center;padding:60px 0;color:var(--muted)">
+        <div style="font-size:40px;margin-bottom:12px">📊</div>
+        <div style="font-family:var(--display);font-size:16px;margin-bottom:6px">Upload Playwright Results</div>
+        <div style="font-size:11px">Drop your results.json on the left to see the bug report</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════
+const APP = {
+  currentPage: 'upload',
+  testCases: [],
+  filename: '',
+  env: {
+    baseUrl:'https://yourapp.com', testEnv:'staging', headless:'true',
+    slowMo:'0', timeout:'30000', retries:'0', workers:'2', browser:'chromium'
+  },
+  users: [
+    {id:'adminUser',  role:'admin', email:'admin@test.com', password:'Admin@1234', name:'Admin User'},
+    {id:'regularUser',role:'user',  email:'user@test.com',  password:'User@1234',  name:'Regular User'},
+  ],
+  files: [],
+  activeFileIdx: 0,
+  // runner
+  runMode: 'all',
+  runTypes: new Set(),
+  runUsers: new Set(),
+  runCases: new Set(),
+  lastCmd: 'npx playwright test',
+  // bugs
+  bugData: null,
+  bugSevFilter: 'all',
+  bugTypeFilter: 'all',
+  bugExpanded: {},
+};
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-step').forEach(s => {
+    s.classList.remove('active');
+    if(s.dataset.page === id) s.classList.add('active');
+  });
+  APP.currentPage = id;
+  if(id==='runner') initRunner();
+  if(id==='generate' && APP.files.length) renderFileTree();
+}
+
+// ══════════════════════════════════════════
+// PAGE 1: SHEET PARSING
+// ══════════════════════════════════════════
+const ALIASES = {
+  type:['type','category','test type','case type','kind'],
+  title:['title','name','test name','test case','test case name','summary','scenario','test'],
+  steps:['steps','test steps','step','actions','action steps','procedure'],
+  expected:['expected','expected result','expected outcome','result','outcome'],
+  priority:['priority','prio','importance','severity'],
+};
+
+function normalizeRow(raw) {
+  const keys = Object.keys(raw);
+  const out = {};
+  Object.entries(ALIASES).forEach(([f,als]) => {
+    const found = keys.find(k => als.includes(k.toLowerCase().trim()));
+    out[f] = found ? String(raw[found]??'').trim() : '';
+  });
+  if (!out.type) {
+    const txt = out.title.toLowerCase();
+    out.type = /invalid|wrong|fail|error|missing|empty|unauthorized|reject/.test(txt) ? 'negative'
+             : /boundary|edge|special|limit|max|min|concurrent|null|sql|xss/.test(txt) ? 'edge'
+             : 'positive';
+  }
+  return out;
+}
+
+function onSheet(e) {
+  const file = e.target.files[0]; if (!file) return;
+  APP.filename = file.name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const wb = XLSX.read(ev.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+    APP.testCases = rows.map(normalizeRow).filter(r => r.title);
+    renderSheetResult();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Drop for sheet
+setupDrop('dz1','fi1', f => {
+  const dt = new DataTransfer(); dt.items.add(f);
+  document.getElementById('fi1').files = dt.files;
+  onSheet({target:{files:[f]}});
+});
+
+function renderSheetResult() {
+  const tc = APP.testCases;
+  const pos = tc.filter(t=>t.type==='positive').length;
+  const neg = tc.filter(t=>t.type==='negative').length;
+  const edg = tc.filter(t=>t.type==='edge').length;
+
+  document.getElementById('dz1title').textContent = APP.filename;
+  document.getElementById('fileOk').style.display = 'flex';
+  document.getElementById('fName').textContent = APP.filename;
+  document.getElementById('fMeta').textContent = `${tc.length} valid test cases detected`;
+  document.getElementById('statsRow').style.display = 'flex';
+  document.getElementById('stTotal').textContent = tc.length;
+  document.getElementById('stPos').textContent = pos;
+  document.getElementById('stNeg').textContent = neg;
+  document.getElementById('stEdge').textContent = edg;
+  document.getElementById('uploadActions').style.display = 'block';
+
+  // nav badge
+  const badge = document.getElementById('tcBadge');
+  badge.textContent = tc.length + ' TEST CASES';
+  badge.style.display = 'inline-block';
+
+  // preview table
+  const wrap = document.getElementById('previewWrap');
+  wrap.style.display = 'block';
+  const typeClass = {positive:'tp-positive',negative:'tp-negative',edge:'tp-edge'};
+  wrap.innerHTML = `<table>
+    <thead><tr><th>TYPE</th><th>TITLE</th><th>STEPS</th><th>EXPECTED</th><th>PRIORITY</th></tr></thead>
+    <tbody>${tc.slice(0,7).map(r=>`<tr>
+      <td><span class="tp ${typeClass[r.type]||''}">${r.type}</span></td>
+      <td>${esc(r.title)}</td>
+      <td>${esc((r.steps||'').substring(0,50))}${r.steps?.length>50?'…':''}</td>
+      <td>${esc((r.expected||'').substring(0,40))}${r.expected?.length>40?'…':''}</td>
+      <td>${r.priority||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+
+  setStatus('SHEET LOADED','var(--green)');
+}
+
+// ══════════════════════════════════════════
+// PAGE 2: CONFIG — users
+// ══════════════════════════════════════════
+function renderUsersUI() {
+  document.getElementById('usersContainer').innerHTML = APP.users.map((u,idx)=>`
+    <div class="user-row">
+      <div class="user-head">
+        <div class="user-avatar" style="background:${roleColor(u.role)}22;color:${roleColor(u.role)}">${u.role[0].toUpperCase()}</div>
+        <select class="sel" style="width:auto;padding:5px 10px" onchange="APP.users[${idx}].role=this.value;renderUsersUI()">
+          ${['admin','user','guest','moderator','premium'].map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+        ${APP.users.length>1?`<button class="del-btn" onclick="APP.users.splice(${idx},1);renderUsersUI()">✕</button>`:''}
+      </div>
+      <div class="grid2">
+        ${[['id','Fixture ID',u.id],['name','Name',u.name],['email','Email',u.email],['password','Password',u.password]].map(([f,lbl,val])=>`
+          <div class="field">
+            <label>${lbl}</label>
+            <input class="inp" value="${esc(val)}" oninput="APP.users[${idx}]['${f}']=this.value"/>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function addUser(){
+  const n=APP.users.length+1;
+  APP.users.push({id:`user${n}`,role:'user',email:`user${n}@test.com`,password:`User${n}@1234`,name:`Test User ${n}`});
+  renderUsersUI();
+}
+function roleColor(r){return r==='admin'?'#d500f9':r==='user'?'#2979ff':r==='guest'?'#00e676':'#ffab00'}
+
+// ══════════════════════════════════════════
+// PAGE 3: GENERATE FILES
+// ══════════════════════════════════════════
+function generateFiles() {
+  const e = APP.env, users = APP.users, tc = APP.testCases;
+  const pos = tc.filter(t=>t.type==='positive');
+  const neg = tc.filter(t=>t.type==='negative');
+  const edg = tc.filter(t=>t.type==='edge');
+
+  const step2Code = (steps='') => String(steps).split(/\n|;\s*|\d+\.\s+/).filter(s=>s.trim()).map((s,i)=>{
+    const st = s.trim();
+    if(/navigate|go to|open|visit/i.test(st)) return `    await page.goto(process.env.BASE_URL || '${e.baseUrl}');`;
+    if(/click/i.test(st)) return `    await page.getByRole('button').first().click(); // ${st}`;
+    if(/enter|type|fill|input/i.test(st)) return `    await page.getByRole('textbox').first().fill('test_value'); // ${st}`;
+    if(/verify|check|assert|should|see/i.test(st)) return `    await expect(page.getByText(/.+/)).toBeVisible(); // ${st}`;
+    return `    // Step ${i+1}: ${st}`;
+  }).join('\n');
+
+  const makeTest = tc => `
+  test('${(tc.title||'Unnamed').replace(/'/g,"\\'")}', async ({ page }) => {
+    // Expected: ${String(tc.expected||'').replace(/\n/g,' ')}
+    // Priority: ${tc.priority||'Medium'}
+${tc.steps ? step2Code(tc.steps) : '    // TODO: implement steps'}
+    await expect(page).not.toHaveURL(/error|500/);
+  });`;
+
+  APP.files = [
+    { path:'playwright.config.ts', content:
+`import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: ${e.timeout},
+  fullyParallel: true,
+  retries: ${e.retries},
+  workers: ${e.workers},
+  reporter: [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['list'],
+    ['json', { outputFile: 'test-results/results.json' }],
+  ],
+  use: {
+    baseURL: process.env.BASE_URL || '${e.baseUrl}',
+    headless: process.env.HEADLESS !== 'false',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'on-first-retry',
+  },
+  projects: [
+    ${['chromium','all'].includes(e.browser)?`{ name: 'chromium', use: { ...devices['Desktop Chrome'] } },`:''}
+    ${['firefox','all'].includes(e.browser)?`{ name: 'firefox',  use: { ...devices['Desktop Firefox'] } },`:''}
+    ${['webkit','all'].includes(e.browser)?`{ name: 'webkit',   use: { ...devices['Desktop Safari'] } },`:''}
+  ],
+});` },
+
+    { path:'.env', content:
+`BASE_URL=${e.baseUrl}
+TEST_ENV=${e.testEnv}
+HEADLESS=${e.headless}
+SLOW_MO=${e.slowMo}
+${users.map(u=>`${u.role.toUpperCase()}_EMAIL=${u.email}\n${u.role.toUpperCase()}_PASSWORD=${u.password}`).join('\n')}` },
+
+    { path:'fixtures/users.json', content: JSON.stringify({users:Object.fromEntries(users.map(u=>[u.id,u]))},null,2) },
+
+    { path:'fixtures/test.fixtures.ts', content:
+`import { test as base, Page } from '@playwright/test';
+import { AuthHelper } from '../helpers/auth.helper';
+import usersData from './users.json';
+const USERS = usersData.users as Record<string, any>;
+type UserFixtures = { ${users.map(u=>`${u.id}: Page`).join('; ')} };
+export const test = base.extend<UserFixtures>({
+${users.map(u=>`  ${u.id}: async ({ page }, use) => {
+    await AuthHelper.loginAs(page, USERS['${u.id}']);
+    await use(page);
+    await AuthHelper.logout(page);
+  },`).join('\n')}
+});
+export { expect } from '@playwright/test';
+export { USERS };` },
+
+    { path:'pages/BasePage.ts', content:
+`import { Page } from '@playwright/test';
+export abstract class BasePage {
+  constructor(protected page: Page) {}
+  async navigate(path = '/') { await this.page.goto(path); await this.waitForLoad(); }
+  async waitForLoad() { await this.page.waitForLoadState('networkidle'); }
+  async getTitle() { return this.page.title(); }
+  async takeScreenshot(name: string) { await this.page.screenshot({ path: \`screenshots/\${name}-\${Date.now()}.png\` }); }
+}` },
+
+    { path:'pages/LoginPage.ts', content:
+`import { BasePage } from './BasePage';
+export class LoginPage extends BasePage {
+  readonly emailInput    = this.page.getByLabel(/email|username/i);
+  readonly passwordInput = this.page.getByLabel(/password/i);
+  readonly submitBtn     = this.page.getByRole('button', { name: /login|sign in|submit/i });
+  readonly errorMsg      = this.page.getByRole('alert');
+  readonly logoutBtn     = this.page.getByRole('button', { name: /logout|sign out/i });
+  async goto() { await this.navigate('/login'); }
+  async login(email: string, password: string) {
+    await this.goto();
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.submitBtn.click();
+    await this.waitForLoad();
+  }
+  async getErrorMessage() { await this.errorMsg.waitFor({state:'visible',timeout:5000}); return this.errorMsg.textContent()??''; }
+  async isLoggedIn() { return this.logoutBtn.isVisible().catch(()=>false); }
+}` },
+
+    { path:'helpers/auth.helper.ts', content:
+`import { Page } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+export interface UserCredentials { email:string; password:string; role:string; name?:string; }
+export class AuthHelper {
+  static async loginAs(page: Page, user: UserCredentials) { await new LoginPage(page).login(user.email, user.password); }
+  static async logout(page: Page) {
+    const btn = page.getByRole('button', { name: /logout|sign out/i });
+    if (await btn.isVisible()) { await btn.click(); await page.waitForLoadState('networkidle'); }
+  }
+  static async isAuthenticated(page: Page) { return page.getByRole('button', { name: /logout|sign out/i }).isVisible(); }
+}` },
+
+    { path:'helpers/data.helper.ts', content:
+`export class DataHelper {
+  static generateEmail(prefix='test') { return \`\${prefix}.\${Date.now()}@testdomain.com\`; }
+  static generatePassword(len=10) {
+    const c='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+    return Array.from({length:len},()=>c[Math.floor(Math.random()*c.length)]).join('');
+  }
+  static randomString(len=8) { return Math.random().toString(36).substring(2,2+len); }
+  static readonly boundaries = {
+    emptyString:'', singleChar:'a', maxLength255:'a'.repeat(255),
+    sqlInjection:"'; DROP TABLE users; --", xssPayload:'<script>alert(1)<\/script>',
+    whitespaceOnly:'   ',
+  };
+}` },
+
+    { path:'tests/from-sheet.spec.ts', content:
+`/**
+ * Auto-generated by QA Forge · ${new Date().toISOString()}
+ * Source: ${APP.filename} · ${tc.length} cases
+ */
+import { test, expect } from '../fixtures/test.fixtures';
+import { LoginPage } from '../pages/LoginPage';
+import { DataHelper } from '../helpers/data.helper';
+
+test.describe('✓ POSITIVE CASES', () => {
+${pos.length ? pos.map(makeTest).join('\n') : "  test.skip('No positive cases',async()=>{});"}
+});
+
+test.describe('✗ NEGATIVE CASES', () => {
+${neg.length ? neg.map(makeTest).join('\n') : "  test.skip('No negative cases',async()=>{});"}
+});
+
+test.describe('◈ EDGE CASES', () => {
+${edg.length ? edg.map(makeTest).join('\n') : "  test.skip('No edge cases',async()=>{});"}
+});
+
+import usersData from '../fixtures/users.json';
+const ALL_USERS = Object.values(usersData.users);
+test.describe('🔄 DATA-DRIVEN', () => {
+  for (const user of ALL_USERS) {
+    test(\`Smoke — \${user.role} can access app\`, async ({ page }) => {
+      await page.goto(process.env.BASE_URL || '${e.baseUrl}');
+      await expect(page).not.toHaveURL(/error|404|500/);
+    });
+  }
+});` },
+  ];
+
+  APP.activeFileIdx = 0;
+  renderFileTree();
+  renderCodeView();
+  renderGenerateSuccess();
+  goPage('generate');
+  setStatus('PROJECT GENERATED','var(--cyan)');
+
+  // Update runner with these test cases
+  initRunnerData();
+}
+
+function renderGenerateSuccess() {
+  document.getElementById('generateSuccess').innerHTML = `
+    <div class="success">
+      <span class="success-icon">🎉</span>
+      <div>
+        <div class="success-title">${APP.files.length} files generated from ${APP.testCases.length} test cases</div>
+        <div class="success-body">
+          1. Download <code>setup-qa.sh</code> → run it → project ready<br/>
+          2. Or copy each file manually into VS Code<br/>
+          3. Run: <code>npx playwright test</code> · Report: <code>npx playwright show-report</code>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderFileTree() {
+  const grouped = {};
+  APP.files.forEach((f,i)=>{
+    const folder = f.path.includes('/') ? f.path.split('/').slice(0,-1).join('/') : '_root';
+    if(!grouped[folder]) grouped[folder]=[];
+    grouped[folder].push({...f,idx:i});
+  });
+  const fc = {fixtures:'var(--amber)',pages:'var(--cyan)',helpers:'#c586c0',tests:'var(--green)',_root:'var(--text)'};
+  document.getElementById('fileTree').innerHTML = Object.entries(grouped).map(([folder,files])=>`
+    ${folder!=='_root'?`<div class="tree-folder" style="color:${fc[folder]||'var(--amber)'}">📁 ${folder}/</div>`:''}
+    ${files.map(f=>`<div class="tree-file ${APP.activeFileIdx===f.idx?'active':''}" onclick="setActiveFile(${f.idx})">
+      ${f.path.endsWith('.json')?'⚙':f.path.endsWith('.ts')?'📄':'📝'} ${f.path.split('/').pop()}
+    </div>`).join('')}
+  `).join('');
+}
+
+function setActiveFile(idx) {
+  APP.activeFileIdx = idx;
+  renderFileTree();
+  renderCodeView();
+}
+
+function renderCodeView() {
+  const f = APP.files[APP.activeFileIdx];
+  if (!f) return;
+  document.getElementById('codeFilename').textContent = f.path;
+  document.getElementById('codeContent').innerHTML = syntaxHL(f.content);
+}
+
+function copyActiveFile() {
+  const f = APP.files[APP.activeFileIdx];
+  if (f) {
+    navigator.clipboard?.writeText(f.content);
+    const btn = document.getElementById('copyFileBtn');
+    btn.textContent='✓ Copied'; setTimeout(()=>btn.textContent='Copy',1500);
+  }
+}
+
+function downloadSetup() {
+  const lines = [
+    '#!/bin/bash','# QA Forge — auto-generated setup',
+    'npm init -y','npm install -D @playwright/test dotenv xlsx',
+    'npx playwright install --with-deps',
+    'mkdir -p tests fixtures pages helpers screenshots auth-states test-results','',
+    ...APP.files.flatMap(f=>{
+      const dir=f.path.includes('/')?f.path.split('/').slice(0,-1).join('/'):'';
+      return [dir?`mkdir -p ${dir}`:'',`cat > ${f.path} << 'EOF'\n${f.content}\nEOF`,''].filter(x=>x!==null);
+    }),
+    "echo '✅ Done! Run: npx playwright test'"
+  ];
+  dl('setup-qa.sh', lines.join('\n'), 'text/plain');
+}
+
+function downloadEnv() {
+  const f = APP.files.find(f=>f.path==='.env');
+  if (f) dl('.env', f.content, 'text/plain');
+}
+
+// ══════════════════════════════════════════
+// PAGE 4: RUNNER
+// ══════════════════════════════════════════
+function initRunnerData() {
+  // populate runner user chips from APP.users
+  document.getElementById('runnerUserChips').innerHTML = APP.users.map(u=>`
+    <div class="uchip ${APP.runUsers.has(u.id)?'sel':''}" onclick="togRunUser('${u.id}',this)">
+      <div class="uav" style="background:${roleColor(u.role)}22;color:${roleColor(u.role)}">${u.role[0].toUpperCase()}</div>
+      <div><div class="uname">${u.id}</div><div class="urole">${u.role.toUpperCase()}</div></div>
+      <span class="uchk">✓</span>
+    </div>`).join('');
+}
+
+function initRunner() {
+  initRunnerData();
+  renderRunCaseList('');
+  buildCmd();
+}
+
+function renderRunCaseList(q) {
+  // use test cases from upload, fallback to sample
+  const cases = APP.testCases.length ? APP.testCases : [
+    {type:'positive',title:'App loads successfully'},
+    {type:'positive',title:'Login page accessible'},
+    {type:'negative',title:'Login fails with wrong password'},
+    {type:'negative',title:'Login fails with empty fields'},
+    {type:'edge',    title:'SQL injection handled safely'},
+    {type:'edge',    title:'XSS payload rejected'},
+  ];
+  const filtered = cases.filter(c=>!q||c.title.toLowerCase().includes(q.toLowerCase()));
+  const tc={positive:'var(--green)',negative:'var(--red)',edge:'var(--amber)'};
+  document.getElementById('runCaseList').innerHTML = filtered.map((c,i)=>`
+    <div class="case-item" onclick="togRunCase(${i},event)">
+      <input type="checkbox" id="rcc${i}" ${APP.runCases.has(i)?'checked':''} onchange="togRunCase(${i},event)"/>
+      <span class="case-badge" style="background:${tc[c.type]||'#fff'}22;color:${tc[c.type]||'#fff'}">${c.type?.toUpperCase()}</span>
+      <span class="case-t">${esc(c.title)}</span>
+    </div>`).join('');
+  updateRunSelCount();
+}
+
+function togRunCase(i,e){
+  if(e.target.tagName==='INPUT'){if(e.target.checked)APP.runCases.add(i);else APP.runCases.delete(i);}
+  else{
+    if(APP.runCases.has(i)){APP.runCases.delete(i);const cb=document.getElementById('rcc'+i);if(cb)cb.checked=false;}
+    else{APP.runCases.add(i);const cb=document.getElementById('rcc'+i);if(cb)cb.checked=true;}
+  }
+  updateRunSelCount(); buildCmd();
+}
+function updateRunSelCount(){document.getElementById('runSelCount').textContent=APP.runCases.size+' selected';}
+function selectAllRun(){const n=APP.testCases.length||6;for(let i=0;i<n;i++)APP.runCases.add(i);renderRunCaseList('');buildCmd();}
+function clearAllRun(){APP.runCases.clear();renderRunCaseList('');buildCmd();}
+function filterRunCases(q){renderRunCaseList(q);}
+
+function selMode(mode,el) {
+  APP.runMode=mode;
+  document.querySelectorAll('.mode-card').forEach(c=>{c.classList.remove('sel');c.querySelector('.mode-chk').textContent='';});
+  el.classList.add('sel'); el.querySelector('.mode-chk').textContent='✓';
+  document.getElementById('rTypeSection').style.display = mode==='type'?'block':'none';
+  document.getElementById('rUserSection').style.display = mode==='user'?'block':'none';
+  document.getElementById('rSpecSection').style.display = mode==='specific'?'block':'none';
+  buildCmd();
+  tlog(`Mode: ${mode.toUpperCase()}`,'tc');
+}
+
+function togType(t,el){
+  if(APP.runTypes.has(t)){APP.runTypes.delete(t);el.className='tpill';}
+  else{APP.runTypes.add(t);el.classList.add('s'+t[0]);}
+  buildCmd();
+}
+
+function togRunUser(id,el){
+  if(APP.runUsers.has(id))APP.runUsers.delete(id);else APP.runUsers.add(id);
+  el.classList.toggle('sel'); buildCmd();
+}
+
+function toggleRSec(hd){hd.nextElementSibling?.classList.toggle('hidden');}
+
+function buildCmd(){
+  const browser=document.getElementById('rBrowser')?.value||'';
+  const headed=document.getElementById('rHeaded')?.value||'';
+  const workers=document.getElementById('rWorkers')?.value||'';
+  const retries=document.getElementById('rRetries')?.value||'';
+  const grep=document.getElementById('rGrep')?.value||'';
+  let parts=['npx playwright test'];
+
+  if(APP.runMode==='type'&&APP.runTypes.size){
+    const map={positive:'POSITIVE',negative:'NEGATIVE',edge:'EDGE',datadriven:'DATA-DRIVEN'};
+    parts.push(`--grep="${[...APP.runTypes].map(t=>map[t]).join('|')}"`);
+  } else if(APP.runMode==='user'&&APP.runUsers.size){
+    parts.push(`--grep="${[...APP.runUsers].join('|')}"`);
+  } else if(APP.runMode==='specific'&&APP.runCases.size){
+    const cases=APP.testCases.length?APP.testCases:[
+      {title:'App loads successfully'},{title:'Login page accessible'},
+      {title:'Login fails with wrong password'},{title:'Login fails with empty fields'},
+      {title:'SQL injection handled safely'},{title:'XSS payload rejected'},
+    ];
+    const titles=[...APP.runCases].map(i=>cases[i]?.title||'').filter(Boolean);
+    if(titles.length===1)parts.push(`--grep="${titles[0]}"`);
+    else parts.push(`--grep="${titles.join('|')}"`);
+  } else if(APP.runMode==='smoke'){
+    parts.push('--grep="Smoke"');
+  } else if(APP.runMode==='failed'){
+    parts.push('--last-failed');
+  }
+
+  if(browser) parts.push(`--project=${browser}`);
+  if(headed)  parts.push(headed);
+  if(workers) parts.push(workers);
+  if(retries) parts.push(retries);
+  if(grep)    parts.push(`--grep="${grep}"`);
+
+  APP.lastCmd = parts.join(' ');
+  document.getElementById('cmdPreview').textContent = APP.lastCmd;
+}
+
+function doRun(){
+  navigator.clipboard?.writeText(APP.lastCmd).catch(()=>{});
+  const term=document.getElementById('term');
+  // clear old lines except cursor
+  while(term.children.length>1) term.removeChild(term.firstChild);
+  document.getElementById('resBar').className='res-bar';
+
+  tlog('','td');
+  tlog('╔══════════════════════════════════╗','tp2');
+  tlog(`║  RUN · ${new Date().toLocaleTimeString()}               `,'tp2');
+  tlog('╚══════════════════════════════════╝','tp2');
+  tlog('','td');
+  tlog('$ '+APP.lastCmd,'tc');
+  tlog('','td');
+  tlog('⚡ Command copied to clipboard!','tg');
+  tlog('📋 Paste in VS Code terminal → Ctrl+V','tc');
+  tlog('','td');
+  tlog('── TEST PLAN ──────────────────────','tw');
+
+  const cases = APP.testCases.length ? APP.testCases : [
+    {type:'positive',title:'App loads successfully'},
+    {type:'positive',title:'Login page accessible'},
+    {type:'negative',title:'Login fails with wrong password'},
+    {type:'edge',    title:'SQL injection handled safely'},
+  ];
+
+  let showing = [...cases];
+  if(APP.runMode==='type'&&APP.runTypes.size) showing=cases.filter(c=>APP.runTypes.has(c.type));
+  else if(APP.runMode==='smoke') showing=cases.slice(0,2);
+
+  showing.slice(0,8).forEach(c=>{
+    const icon=c.type==='positive'?'✓':c.type==='negative'?'✗':'◈';
+    const cls=c.type==='positive'?'tg':c.type==='negative'?'tr':'ta';
+    tlog(`  ${icon} ${c.title}`,cls);
+  });
+  if(showing.length>8) tlog(`  … and ${showing.length-8} more`,'td');
+
+  tlog('','td');
+  tlog('──────────────────────────────────','td');
+  tlog('After running, upload results to Bug Report tab:','td');
+  tlog('  📁 test-results/results.json','tc');
+  tlog('','td');
+  tlog('  npx playwright show-report','tc');
+
+  // result bar
+  const bar=document.getElementById('resBar');
+  bar.className='res-bar show';
+  bar.innerHTML=`
+    <div class="res-stat" style="display:flex;align-items:center;gap:6px">
+      <span class="rn" style="color:var(--cyan)">${showing.length}</span>
+      <span class="rl">QUEUED</span>
+    </div>
+    <span style="color:var(--muted);font-size:9px;margin-left:8px">${APP.runMode.toUpperCase()} MODE</span>
+    <span style="margin-left:auto;font-size:10px;color:var(--muted)">✓ Copied to clipboard</span>
+    <button class="btn-sm" onclick="navigator.clipboard?.writeText(APP.lastCmd);tlog('✓ Copied again','tg')">Copy Again</button>
+    <button class="btn-sm primary-sm" onclick="goPage('bugs')">→ Bug Report</button>`;
+
+  scrollTerm();
+  setStatus('RUNNING','var(--amber)');
+  setTimeout(()=>setStatus('READY','var(--green)'),2000);
+}
+
+function tlog(text,cls='td'){
+  const term=document.getElementById('term');
+  const cursor=document.getElementById('termCursor');
+  const d=document.createElement('div');
+  d.className='tl';
+  d.innerHTML=`<span class="tt">${nowT()}</span><span class="tx ${cls}">${esc(text)}</span>`;
+  term.insertBefore(d,cursor);
+  scrollTerm();
+}
+function scrollTerm(){const t=document.getElementById('term');t.scrollTop=t.scrollHeight;}
+function clearTerm(){const t=document.getElementById('term');while(t.children.length>1)t.removeChild(t.firstChild);document.getElementById('resBar').className='res-bar';}
+function copyTerm(){navigator.clipboard?.writeText([...document.querySelectorAll('#term .tx')].map(e=>e.textContent).join('\n'));tlog('✓ Copied','tg');}
+
+// ══════════════════════════════════════════
+// PAGE 5: BUG REPORT
+// ══════════════════════════════════════════
+const SEV_META={
+  Critical:{bg:'rgba(255,23,68,.1)',color:'#ff1744',border:'rgba(255,23,68,.3)'},
+  High:    {bg:'rgba(255,171,0,.1)',color:'#ffab00',border:'rgba(255,171,0,.3)'},
+  Medium:  {bg:'rgba(0,229,255,.08)',color:'#00e5ff',border:'rgba(0,229,255,.25)'},
+  Low:     {bg:'rgba(0,230,118,.08)',color:'#00e676',border:'rgba(0,230,118,.25)'},
+};
+const TYPE_META={positive:{color:'#00e676',icon:'✓'},negative:{color:'#ff1744',icon:'✗'},edge:{color:'#ffab00',icon:'◈'},other:{color:'#94a3b8',icon:'○'}};
+
+setupDrop('rdz','rfi',f=>{
+  const dt=new DataTransfer();dt.items.add(f);
+  document.getElementById('rfi').files=dt.files;
+  onResults({target:{files:[f]}});
+});
+
+function onResults(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{try{loadBugData(JSON.parse(ev.target.result));}catch(err){alert('Cannot parse: '+err.message);}};
+  r.readAsText(f);
+}
+
+function parseBugData(json){
+  const bugs=[],passed=[],stats={total:0,passed:0,failed:0,skipped:0,duration:0};
+  let idx=1;
+  function classifySev(title,err){
+    const t=(title+err).toLowerCase();
+    if(/sql|xss|injection|security|auth|crash|500/.test(t)) return 'Critical';
+    if(/login|payment|fail|invalid|unauthorized/.test(t)) return 'High';
+    if(/edge|boundary|special|max|min|limit/.test(t)) return 'Medium';
+    return 'Low';
+  }
+  function classifyType(title){
+    const t=title.toLowerCase();
+    if(/positive|success|valid|happy/.test(t)) return 'positive';
+    if(/negative|fail|invalid|wrong|empty/.test(t)) return 'negative';
+    if(/edge|boundary|sql|xss|special|max|min/.test(t)) return 'edge';
+    return 'other';
+  }
+  function walk(suite,parent=''){
+    const name=[parent,suite.title].filter(Boolean).join(' › ');
+    (suite.specs||[]).forEach(spec=>{
+      (spec.tests||[]).forEach(t=>{
+        const res=t.results?.[0]||{};
+        const status=res.status||t.status||'unknown';
+        const title=[name,spec.title].filter(Boolean).join(' › ');
+        stats.total++; stats.duration+=res.duration||0;
+        if(status==='passed'){stats.passed++;passed.push({title,duration:res.duration||0});}
+        else if(status==='skipped'||status==='pending'){stats.skipped++;}
+        else{
+          stats.failed++;
+          const error=res.error?.message||res.errors?.[0]?.message||'Unknown error';
+          bugs.push({
+            id:`BUG-${String(idx++).padStart(3,'0')}`,title,error,
+            severity:classifySev(title,error),type:classifyType(title),
+            status,duration:res.duration||0,file:spec.file||'',retry:res.retry||0,
+          });
+        }
+      });
+    });
+    (suite.suites||[]).forEach(s=>walk(s,name));
+  }
+  if(json.suites) json.suites.forEach(s=>walk(s,''));
+  else if(Array.isArray(json)) json.forEach(s=>walk(s,''));
+  const ord={Critical:0,High:1,Medium:2,Low:3};
+  bugs.sort((a,b)=>ord[a.severity]-ord[b.severity]);
+  return {bugs,passed,stats};
+}
+
+function loadBugData(json){
+  APP.bugData=parseBugData(json);
+  APP.bugSevFilter='all'; APP.bugTypeFilter='all'; APP.bugExpanded={};
+  document.getElementById('bugUploadArea').style.display='none';
+  document.getElementById('bugFilters').style.display='block';
+  renderBugDashboard();
+  setStatus('RESULTS LOADED','var(--cyan)');
+}
+
+function loadDemoResults(){
+  const demo={suites:[{title:'from-sheet.spec.ts',suites:[
+    {title:'✓ POSITIVE CASES',specs:[
+      {title:'App loads successfully',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'passed',duration:1240}]}]},
+      {title:'Login page is accessible',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'passed',duration:890}]}]},
+    ]},
+    {title:'✗ NEGATIVE CASES',specs:[
+      {title:'Login fails with wrong password',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'failed',duration:3200,error:{message:"expect(received).toBe(expected)\nExpected: false\nReceived: true\n  at LoginPage.isLoggedIn (pages/LoginPage.ts:42)"},retry:0}]}]},
+      {title:'Login fails with empty fields',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'passed',duration:1100}]}]},
+    ]},
+    {title:'◈ EDGE CASES',specs:[
+      {title:'SQL injection in login does not crash app',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'failed',duration:5100,error:{message:"TimeoutError: Timeout 30000ms exceeded.\nHTTP 500 returned for SQL injection input."},retry:1}]}]},
+      {title:'XSS payload is handled safely',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'passed',duration:980}]}]},
+      {title:'Max length input handled gracefully',file:'tests/from-sheet.spec.ts',tests:[{results:[{status:'failed',duration:2800,error:{message:"Error: Element not found: getByLabel(/email/i)"},retry:0}]}]},
+    ]},
+  ]}]};
+  loadBugData(demo);
+}
+
+function renderBugDashboard(){
+  const {bugs,passed,stats}=APP.bugData;
+  const rate=stats.total?Math.round(stats.passed/stats.total*100):0;
+
+  // sev grid
+  document.getElementById('sevGrid').innerHTML=['Critical','High','Medium','Low'].map(sev=>{
+    const count=bugs.filter(b=>b.severity===sev).length;
+    const m=SEV_META[sev];
+    const active=APP.bugSevFilter===sev;
+    return `<div class="sev-card" onclick="setBugSev('${sev}')"
+      style="background:${active?m.bg:'var(--s1)'};border-color:${active?m.border:'var(--border2)'}">
+      <div class="sev-n" style="color:${m.color}">${count}</div>
+      <div class="sev-l" style="color:${m.color}">${sev.toUpperCase()}</div>
+    </div>`;
+  }).join('');
+
+  // type filters
+  const tc={positive:'#00e676',negative:'#ff1744',edge:'#ffab00'};
+  document.getElementById('bugTypeFilters').innerHTML=
+    ['all','positive','negative','edge'].map(t=>`
+      <div class="tpill ${APP.bugTypeFilter===t?'sel-'+t:''}" onclick="setBugType('${t}')"
+        style="${APP.bugTypeFilter===t?`background:${tc[t]||'var(--s3)'}22;border-color:${tc[t]||'var(--cyan)'};color:${tc[t]||'var(--cyan)'}`:''}"
+      >${t==='all'?'ALL':t.toUpperCase()}</div>`).join('');
+
+  // main content
+  const visible=bugs.filter(b=>{
+    const sevOk=APP.bugSevFilter==='all'||b.severity===APP.bugSevFilter;
+    const typeOk=APP.bugTypeFilter==='all'||b.type===APP.bugTypeFilter;
+    return sevOk&&typeOk;
+  });
+
+  const donut=renderDonutSVG(stats);
+
+  let right=`
+    <div class="donut-wrap">
+      ${donut}
+      <div>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><span style="color:var(--green)">${stats.passed} Passed</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span style="color:var(--red)">${stats.failed} Failed</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span style="color:var(--amber)">${stats.skipped} Skipped</span></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-family:var(--display);font-size:22px;font-weight:800;color:var(--cyan)">${rate}%</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px">PASS RATE</div>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px">
+        ${[['TOTAL',stats.total,'var(--text)'],['PASSED',stats.passed,'var(--green)'],['FAILED',stats.failed,'var(--red)'],['BUGS',bugs.length,'var(--red)']].map(([l,v,c])=>`
+          <div class="stat" style="min-width:70px;border-color:${c}20">
+            <div class="stat-n" style="color:${c}">${v}</div><div class="stat-l">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
+  if(bugs.length===0){
+    right+=`<div style="text-align:center;padding:48px 0"><div style="font-size:42px;margin-bottom:12px">🎉</div>
+      <div style="font-family:var(--display);font-size:18px;color:var(--green)">All Tests Passed!</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">No bugs found</div></div>`;
+  } else {
+    right+=`<div style="font-size:9px;letter-spacing:2px;color:var(--muted);margin:16px 0 8px">BUG LIST — ${visible.length} ISSUES</div>`;
+    right+=visible.map(bug=>{
+      const m=SEV_META[bug.severity]||SEV_META.Low;
+      const tm=TYPE_META[bug.type]||TYPE_META.other;
+      const open=APP.bugExpanded[bug.id];
+      const fix=bug.severity==='Critical'?'🔴 Block release — fix immediately. Check auth/security and server error handling.':
+                bug.severity==='High'?'🟠 High priority — fix before next release. Verify error messages and validation.':
+                bug.severity==='Medium'?'🟡 Fix in current sprint. Check boundary conditions.':
+                '🟢 Fix when convenient. Low user impact.';
+      return `<div class="bug-row">
+        <div class="bug-hd" onclick="togBug('${bug.id}')">
+          <span class="bug-id">${bug.id}</span>
+          <span class="sev-badge" style="background:${m.bg};color:${m.color};border:1px solid ${m.border}">${bug.severity.toUpperCase()}</span>
+          <span class="type-icon" style="color:${tm.color}">${tm.icon}</span>
+          <span class="bug-ttl">${esc(bug.title)}</span>
+          <span class="bug-dur">${bug.duration}ms</span>
+          ${bug.retry?`<span style="background:rgba(0,229,255,.1);color:var(--cyan);border-radius:3px;padding:1px 5px;font-size:9px">×${bug.retry}</span>`:''}
+          <span style="color:var(--muted);font-size:10px">${open?'▲':'▼'}</span>
+        </div>
+        <div class="bug-body ${open?'open':''}">
+          <div style="font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:5px">ERROR</div>
+          <div class="bug-err">${esc(bug.error)}</div>
+          <div class="bug-meta">
+            <div class="bm"><label>FILE</label><span>${esc(bug.file||'—')}</span></div>
+            <div class="bm"><label>TYPE</label><span>${bug.type}</span></div>
+            <div class="bm"><label>DURATION</label><span>${bug.duration}ms</span></div>
+            <div class="bm"><label>RETRIES</label><span>${bug.retry}</span></div>
+          </div>
+          <div class="fix-box"><div class="fix-title">💡 Suggested Fix</div><div class="fix-text">${fix}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    if(passed.length){
+      right+=`<details style="margin-top:16px">
+        <summary style="cursor:pointer;color:var(--green);font-size:11px;font-weight:700;padding:8px 0;user-select:none">✓ ${passed.length} Passed Tests</summary>
+        <div>${passed.map(t=>`<div style="display:flex;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--green);font-size:11px">✓</span>
+          <span style="color:var(--muted);font-size:11px;flex:1">${esc(t.title)}</span>
+          <span style="color:var(--muted2);font-size:10px">${t.duration}ms</span>
+        </div>`).join('')}</div>
+      </details>`;
+    }
+  }
+
+  document.getElementById('bugRight').innerHTML = right;
+}
+
+function togBug(id){APP.bugExpanded[id]=!APP.bugExpanded[id];renderBugDashboard();}
+function setBugSev(s){APP.bugSevFilter=APP.bugSevFilter===s?'all':s;renderBugDashboard();}
+function setBugType(t){APP.bugTypeFilter=t;renderBugDashboard();}
+function resetBugReport(){APP.bugData=null;document.getElementById('bugUploadArea').style.display='block';document.getElementById('bugFilters').style.display='none';document.getElementById('bugRight').innerHTML='<div style="text-align:center;padding:60px 0;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">📊</div><div style="font-family:var(--display);font-size:16px">Upload Playwright Results</div></div>';}
+
+function renderDonutSVG(stats){
+  const r=50,cx=60,cy=60,sw=13,circ=2*Math.PI*r;
+  const pp=stats.total?stats.passed/stats.total:0;
+  const fp=stats.total?stats.failed/stats.total:0;
+  const sp=stats.total?stats.skipped/stats.total:0;
+  const segs=[{pct:pp,color:'#00e676',off:0},{pct:fp,color:'#ff1744',off:pp},{pct:sp,color:'#ffab00',off:pp+fp}];
+  let html=`<svg width="120" height="120" viewBox="0 0 120 120"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border2)" stroke-width="${sw}"/>`;
+  segs.forEach(s=>{if(s.pct<=0)return;const dash=circ*s.pct,gap=circ*(1-s.pct),offset=circ*(.25-s.off);
+    html+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${offset}"/>`;});
+  html+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" fill="var(--text)" font-size="16" font-weight="800" font-family="Syne,sans-serif">${stats.total}</text>
+    <text x="${cx}" y="${cy+12}" text-anchor="middle" fill="var(--muted)" font-size="8">TESTS</text></svg>`;
+  return html;
+}
+
+function exportBugExcel(){
+  if(!APP.bugData) return;
+  const rows=APP.bugData.bugs.map(b=>['Bug ID','Severity','Type','Title','Error','File','Duration','Retries'].reduce((o,k,i)=>{o[k]=[b.id,b.severity,b.type,b.title,b.error,b.file,b.duration,b.retry][i];return o;},{}));
+  const header=Object.keys(rows[0]).join(',');
+  const csv=rows.map(r=>Object.values(r).map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(`bug-report-${Date.now()}.csv`, header+'\n'+csv,'text/csv');
+}
+
+function exportBugHTML(){
+  if(!APP.bugData) return;
+  const {bugs,stats}=APP.bugData;
+  const rate=stats.total?Math.round(stats.passed/stats.total*100):0;
+  const html=`<!DOCTYPE html><html><head><title>Bug Report</title>
+<style>body{font-family:monospace;background:#060810;color:#e3eeff;padding:32px}
+h1{color:#00e5ff}table{width:100%;border-collapse:collapse}
+th{background:#0b0f1a;padding:8px 12px;text-align:left;color:#3a5070;font-size:10px;border-bottom:1px solid #1a2438}
+td{padding:8px 12px;border-bottom:1px solid #0f1520;font-size:11px;color:#94a3b8;vertical-align:top}
+.stats{display:flex;gap:12px;margin:16px 0}.stat{background:#0b0f1a;border:1px solid #1a2438;border-radius:8px;padding:12px 18px;text-align:center}
+.n{font-size:24px;font-weight:800}</style></head><body>
+<h1>🐛 Bug Report</h1><p style="color:#3a5070">${new Date().toLocaleString()}</p>
+<div class="stats">
+<div class="stat"><div class="n" style="color:#e3eeff">${stats.total}</div><div>Total</div></div>
+<div class="stat"><div class="n" style="color:#00e676">${stats.passed}</div><div>Passed</div></div>
+<div class="stat"><div class="n" style="color:#ff1744">${stats.failed}</div><div>Failed</div></div>
+<div class="stat"><div class="n" style="color:#00e5ff">${rate}%</div><div>Pass Rate</div></div>
+</div>
+<h2 style="color:#94a3b8">Bugs (${bugs.length})</h2>
+<table><thead><tr><th>ID</th><th>Severity</th><th>Title</th><th>Error</th><th>File</th></tr></thead>
+<tbody>${bugs.map(b=>`<tr><td>${b.id}</td><td style="color:${SEV_META[b.severity]?.color}">${b.severity}</td><td>${esc(b.title)}</td><td style="font-size:10px">${esc(b.error.substring(0,150))}</td><td>${esc(b.file)}</td></tr>`).join('')}</tbody></table>
+</body></html>`;
+  dl(`bug-report-${Date.now()}.html`,html,'text/html');
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function setupDrop(dzId,fiId,onFileCb){
+  setTimeout(()=>{
+    const dz=document.getElementById(dzId); if(!dz) return;
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)onFileCb(f);});
+  },100);
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nowT(){return new Date().toLocaleTimeString('en',{hour12:false});}
+function dl(name,content,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+function setStatus(txt,color){document.getElementById('statusTxt').textContent=txt;document.getElementById('statusDot').style.background=color;document.getElementById('statusDot').style.boxShadow=`0 0 6px ${color}`;}
+
+function syntaxHL(code){
+  let s=esc(code);
+  s=s.replace(/(\/\/.*$)/gm,'<span style="color:#5c7a3e">$1</span>');
+  s=s.replace(/\b(import|export|from|const|let|async|await|return|default|type|interface|extends|describe|test|expect|true|false|null|undefined|for|of|if|else)\b/g,'<span style="color:#569cd6">$1</span>');
+  s=s.replace(/('([^'\\]|\\.)*'|`([^`\\]|\\.)*`|"([^"\\]|\\.)*")/g,'<span style="color:#ce9178">$1</span>');
+  s=s.replace(/\b([A-Z][a-zA-Z]+Page|[A-Z][a-zA-Z]+Helper)\b/g,'<span style="color:#4ec9b0">$1</span>');
+  s=s.replace(/\b(\d+)\b/g,'<span style="color:#b5cea8">$1</span>');
+  return s;
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+renderUsersUI();
+buildCmd();
+</script>
+</body>
+</html>
