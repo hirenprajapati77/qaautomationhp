@@ -1,0 +1,26 @@
+# ---- Core testing ----
+pytest==8.2.0
+pytest-html==4.1.1
+pytest-xdist==3.5.0
+
+# ---- API automation ----
+requests==2.32.3
+
+# ---- E2E automation ----
+playwright==1.44.0
+pytest-playwright==0.5.0
+
+# ---- ML validation ----
+scikit-learn==1.5.0
+numpy==1.26.4
+pandas==2.2.2
+
+# ---- Agentic RAG stack ----
+langchain==0.2.5
+langchain-community==0.2.5
+langgraph==0.1.5
+ragas==0.1.9
+
+# ---- Utilities ----
+python-dotenv==1.0.1
+tabulate==0.9.0
