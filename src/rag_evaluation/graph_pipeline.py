@@ -25,6 +25,8 @@ class MultiAgentRAGPipeline:
         critic_agent: CriticAgent,
         max_attempts: int = 2,
     ):
+        if max_attempts < 1:
+            raise ValueError(f"max_attempts must be >= 1, got {max_attempts}")
         self.retriever_agent = retriever_agent
         self.generator_agent = generator_agent
         self.critic_agent = critic_agent

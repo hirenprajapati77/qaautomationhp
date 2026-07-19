@@ -34,8 +34,17 @@ class BasePage:
     def text_of(self, selector: str) -> str:
         return self.page.locator(selector).inner_text(timeout=settings.e2e.default_timeout_ms)
 
-    def is_visible(self, selector: str) -> bool:
-        return self.page.locator(selector).is_visible()
+    def is_visible(self, selector: str, timeout_ms: int | None = None) -> bool:
+        """Return True if the locator becomes visible within the timeout."""
+        timeout = settings.e2e.default_timeout_ms if timeout_ms is None else timeout_ms
+        try:
+            self.page.locator(selector).wait_for(state="visible", timeout=timeout)
+            return True
+        except Exception:
+            return False
 
     def wait_for(self, selector: str, state: str = "visible") -> None:
         self.page.locator(selector).wait_for(state=state, timeout=settings.e2e.default_timeout_ms)
+
+    def wait_for_hidden(self, selector: str) -> None:
+        self.page.locator(selector).wait_for(state="hidden", timeout=settings.e2e.default_timeout_ms)

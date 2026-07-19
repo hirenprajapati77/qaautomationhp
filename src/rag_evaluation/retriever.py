@@ -13,6 +13,7 @@ Swapping to real Chroma is a drop-in replacement - see the
 `ChromaRetriever` stub at the bottom for the integration point.
 """
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 from sklearn.feature_extraction.text import TfidfVectorizer, ENGLISH_STOP_WORDS
@@ -39,6 +40,8 @@ class Document:
 
 class TfidfRetriever:
     def __init__(self, documents: list[Document]):
+        if not documents:
+            raise ValueError("TfidfRetriever requires a non-empty documents list")
         self.documents = documents
         self._vectorizer = TfidfVectorizer(
             stop_words=_STOP_WORDS,
@@ -47,13 +50,19 @@ class TfidfRetriever:
         )
         self._matrix = self._vectorizer.fit_transform([d.text for d in documents])
 
-
     def retrieve(self, query: str, top_k: int = 3) -> list[Document]:
+        if top_k < 1:
+            raise ValueError(f"top_k must be >= 1, got {top_k}")
         query_vec = self._vectorizer.transform([query])
         similarities = cosine_similarity(query_vec, self._matrix).flatten()
         ranked_idx = similarities.argsort()[::-1][:top_k]
         results = [self.documents[i] for i in ranked_idx]
-        logger.info("Retrieved %d docs for query %r -> %s", len(results), query, [d.doc_id for d in results])
+        logger.info(
+            "Retrieved %d docs for query %r -> %s",
+            len(results),
+            query,
+            [d.doc_id for d in results],
+        )
         return results
 
 
@@ -69,4 +78,13 @@ class ChromaRetriever:
 
     Not used in tests/CI to keep the repo dependency-light and offline.
     """
-    pass
+
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError(
+            "ChromaRetriever is a reference stub only - see class docstring."
+        )
+
+    def retrieve(self, query: str, top_k: int = 3) -> list[Document]:
+        raise NotImplementedError(
+            "ChromaRetriever is a reference stub only - see class docstring."
+        )

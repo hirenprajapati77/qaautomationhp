@@ -7,8 +7,9 @@ pytest-xdist==3.5.0
 requests==2.32.3
 
 # ---- E2E automation ----
-playwright==1.44.0
-pytest-playwright==0.5.0
+# 1.45+ required for Ubuntu 24.04 (GitHub Actions ubuntu-latest) deps (libasound2t64).
+playwright==1.49.1
+pytest-playwright==0.6.2
 
 # ---- ML validation ----
 scikit-learn==1.5.0

@@ -16,22 +16,34 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Prepare reports directory
+        run: mkdir -p reports
+
       - name: Run ML model validation tests
+        env:
+          LOG_FILE: reports/framework.log
         run: pytest -m ml --html=reports/ml-report.html --self-contained-html
 
       - name: Run Multi-Agent RAG evaluation tests
+        env:
+          LOG_FILE: reports/framework.log
         run: pytest -m rag --html=reports/rag-report.html --self-contained-html
 
       - name: Run API automation tests
+        env:
+          LOG_FILE: reports/framework.log
         run: pytest -m api --html=reports/api-report.html --self-contained-html
 
       - name: Enforce Quality Gates
+        env:
+          LOG_FILE: reports/framework.log
         run: python scripts/run_quality_gates.py
 
       - name: Upload test reports
@@ -50,15 +62,30 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          playwright install --with-deps chromium
 
-      - name: Run E2E Playwright tests
-        run: pytest -m e2e --html=reports/e2e-report.html --self-contained-html
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Playwright browser
+        # Playwright >=1.45 installs Ubuntu 24.04-compatible packages (libasound2t64).
+        run: playwright install --with-deps chromium
+
+      - name: Prepare reports directory
+        run: mkdir -p reports
+
+      - name: Run E2E Playwright tests (exclude external Fuzion UAT)
+        env:
+          LOG_FILE: reports/framework.log
+        run: pytest -m "e2e and not fuzion" --html=reports/e2e-report.html --self-contained-html
 
       - name: Upload E2E report
         if: always()

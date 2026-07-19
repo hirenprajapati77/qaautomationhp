@@ -49,5 +49,7 @@ class TestUsersAPI:
         assert response.status_code == 204
 
     def test_response_time_within_sla(self, api_client):
+        # Under the default mocked api_client fixture this asserts mock timing
+        # stays within the SLA envelope; live clients exercise real latency.
         response = api_client.get(UsersEndpoints.LIST_USERS)
         assert response.elapsed_ms < 3000, f"API too slow: {response.elapsed_ms:.0f}ms"

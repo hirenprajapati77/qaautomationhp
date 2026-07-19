@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from src.config.settings import settings
 from src.e2e_automation.base_page import BasePage
 
 
@@ -14,8 +16,7 @@ class FuzionLoginPage(BasePage):
 
     def __init__(self, page):
         super().__init__(page)
-        # Override base URL specifically for this target website
-        self.base_url = "https://uat.fuzionhr.com"
+        self.base_url = settings.e2e.fuzion_base_url
 
     def open(self) -> FuzionLoginPage:
         self.goto("/login")
