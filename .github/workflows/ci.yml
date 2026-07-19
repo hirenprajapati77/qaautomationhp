@@ -76,6 +76,7 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ hashFiles('requirements.txt') }}
 
       - name: Install Playwright browser
+        # Playwright >=1.45 installs Ubuntu 24.04-compatible packages (libasound2t64).
         run: playwright install --with-deps chromium
 
       - name: Prepare reports directory
