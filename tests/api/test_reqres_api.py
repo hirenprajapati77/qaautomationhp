@@ -31,7 +31,7 @@ class TestUsersAPI:
         assert response.status_code == 404
 
     def test_create_user(self, api_client):
-        payload = {"name": "Hemant QA Bot", "job": "Principal SDET"}
+        payload = {"name": "Hiren QA Bot", "job": "Principal SDET"}
         response = api_client.post(UsersEndpoints.CREATE_USER, json=payload)
         assert response.status_code == 201
         assert response.json["name"] == payload["name"]

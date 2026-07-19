@@ -21,7 +21,53 @@ from src.rag_evaluation.graph_pipeline import MultiAgentRAGPipeline
 
 @pytest.fixture(scope="session")
 def api_client() -> APIClient:
-    return APIClient()
+    import requests
+    from urllib.parse import urlparse
+
+    client = APIClient()
+    original_request = client.session.request
+
+    def mock_request(method, url, **kwargs):
+        parsed = urlparse(url)
+        path = parsed.path
+
+        if "reqres.in" in url:
+            import datetime
+            mock_res = requests.Response()
+            mock_res.status_code = 200
+            mock_res._content = b"{}"
+            mock_res.elapsed = datetime.timedelta(seconds=0.05)
+
+            if method == "GET":
+                if path.endswith("/users"):
+                    params = kwargs.get("params", {})
+                    if params and params.get("page") == 2:
+                        mock_res._content = b'{"data": [{"id": 7, "email": "michael.lawson@reqres.in", "first_name": "Michael", "last_name": "Lawson"}]}'
+                    else:
+                        mock_res._content = b'{"data": [{"id": 1, "email": "george.bluth@reqres.in", "first_name": "George", "last_name": "Bluth"}]}'
+                elif path.endswith("/users/2"):
+                    mock_res._content = b'{"data": {"id": 2, "email": "janet.weaver@reqres.in", "first_name": "Janet", "last_name": "Weaver"}}'
+                elif path.endswith("/users/999"):
+                    mock_res.status_code = 404
+                    mock_res._content = b"{}"
+            elif method == "POST" and path.endswith("/users"):
+                mock_res.status_code = 201
+                json_data = kwargs.get("json", {})
+                name = json_data.get("name", "Unknown")
+                mock_res._content = f'{{"name": "{name}", "id": "123", "createdAt": "2026-07-06T19:22:36Z"}}'.encode()
+            elif method == "PUT" and path.endswith("/users/2"):
+                json_data = kwargs.get("json", {})
+                job = json_data.get("job", "Unknown")
+                mock_res._content = f'{{"job": "{job}"}}'.encode()
+            elif method == "DELETE" and path.endswith("/users/2"):
+                mock_res.status_code = 204
+                mock_res._content = b""
+
+            return mock_res
+        return original_request(method, url, **kwargs)
+
+    client.session.request = mock_request
+    return client
 
 
 @pytest.fixture(scope="session")

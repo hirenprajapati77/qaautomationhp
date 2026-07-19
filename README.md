@@ -138,4 +138,4 @@ Thresholds are centralized in `src/config/settings.py` (`MLQualityGate`, `RAGQua
 
 ## 8. Author
 
-**Hemant Kumar Dhote** — Principal Software Engineer / Lead Tech (QTE), 10+ years in Test Automation, Agentic RAG Evaluation, and Team Leadership.
+**Hiren Prajapati** — Principal Software Engineer / Lead Tech (QTE), 10+ years in Test Automation, Agentic RAG Evaluation, and Team Leadership.
