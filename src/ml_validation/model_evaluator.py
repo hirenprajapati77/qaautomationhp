@@ -33,12 +33,22 @@ class EvaluationReport:
 
 class ModelEvaluator:
     def __init__(self, model, X_test: np.ndarray, y_test: np.ndarray):
+        if len(y_test) == 0:
+            raise ValueError("y_test must not be empty")
+        if len(X_test) != len(y_test):
+            raise ValueError(
+                f"X_test and y_test length mismatch: {len(X_test)} vs {len(y_test)}"
+            )
         self.model = model
         self.X_test = X_test
         self.y_test = y_test
         self.y_pred = model.predict(X_test)
 
     def bootstrap_accuracy_ci(self, n_bootstrap: int = 1000, ci: float = 0.95, seed: int = 42) -> tuple[float, float]:
+        if n_bootstrap < 1:
+            raise ValueError(f"n_bootstrap must be >= 1, got {n_bootstrap}")
+        if not 0.0 < ci < 1.0:
+            raise ValueError(f"ci must be between 0 and 1 exclusive, got {ci}")
         rng = np.random.default_rng(seed)
         n = len(self.y_test)
         accuracies = []

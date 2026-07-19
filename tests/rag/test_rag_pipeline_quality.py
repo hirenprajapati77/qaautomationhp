@@ -8,36 +8,28 @@ The "golden dataset" here is a small set of (question -> expected
 relevant doc ids) pairs defined directly in the test - exactly how a
 QA engineer would hand-curate a golden set for a real project.
 """
+from __future__ import annotations
+
 import pytest
 
 from src.config.settings import settings
+from src.rag_evaluation.fixtures import RAG_GOLDEN_DATASET
 from src.rag_evaluation.ragas_metrics import context_precision, context_recall
 
-GOLDEN_DATASET = [
-    {
-        "question": "What is Playwright used for?",
-        "relevant_doc_ids": {"doc-1"},
-    },
-    {
-        "question": "What does RAGAS evaluate in a RAG pipeline?",
-        "relevant_doc_ids": {"doc-3"},
-    },
-    {
-        "question": "How does LangGraph orchestrate multi agent workflows?",
-        "relevant_doc_ids": {"doc-4"},
-    },
-    {
-        "question": "What is a quality gate in CI/CD?",
-        "relevant_doc_ids": {"doc-5"},
-    },
-]
+# Offline TF-IDF mock-judge scores are lower than real LLM-as-judge scores.
+# Documented explicitly so the relaxation is intentional, not magic drift.
+MOCK_JUDGE_FAITHFULNESS_FLOOR = settings.rag_gate.critic_faithfulness
 
 
 @pytest.mark.rag
 @pytest.mark.quality_gate
 class TestMultiAgentRAGQuality:
 
-    @pytest.mark.parametrize("case", GOLDEN_DATASET, ids=[c["question"] for c in GOLDEN_DATASET])
+    @pytest.mark.parametrize(
+        "case",
+        RAG_GOLDEN_DATASET,
+        ids=[c["question"] for c in RAG_GOLDEN_DATASET],
+    )
     def test_pipeline_answer_quality_against_golden_dataset(self, rag_pipeline, case):
         state = rag_pipeline.run(case["question"])
         retrieved_ids = [d.doc_id for d in state.retrieved_docs]
@@ -56,13 +48,15 @@ class TestMultiAgentRAGQuality:
     def test_critic_agent_approves_grounded_answer(self, rag_pipeline):
         state = rag_pipeline.run("What is a quality gate in CI/CD?")
         assert state.approved, "Critic agent should approve a well-grounded answer"
-        assert state.faithfulness >= settings.rag_gate.min_faithfulness - 0.6  # relaxed for TF-IDF mock judge
+        assert state.faithfulness >= MOCK_JUDGE_FAITHFULNESS_FLOOR
 
     def test_pipeline_retries_on_low_quality_answer(self, rag_pipeline):
         state = rag_pipeline.run("Completely unrelated question about deep sea fishing quotas")
-        # Either it retried up to max_attempts, or approved on first try - both are valid,
-        # but attempts must never exceed the configured maximum.
         assert state.attempts <= rag_pipeline.max_attempts
+        assert state.attempts >= 1
+        # Unanswerable queries should exhaust retries or finish without approval.
+        if not state.approved:
+            assert state.attempts == rag_pipeline.max_attempts
 
     def test_trace_is_recorded_for_auditability(self, rag_pipeline):
         state = rag_pipeline.run("What is Playwright used for?")

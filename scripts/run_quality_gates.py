@@ -8,6 +8,8 @@ merge/release automatically.
 Usage:
     python scripts/run_quality_gates.py
 """
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
@@ -15,14 +17,23 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 
 from src.config.settings import settings
-from src.ml_validation.model_trainer import train_complaint_classifier
+from src.core.logger import get_logger
 from src.ml_validation.model_evaluator import ModelEvaluator
-from src.rag_evaluation.llm_client import MockLLM
-from src.rag_evaluation.retriever import TfidfRetriever, Document
-from src.rag_evaluation.agents import RetrieverAgent, GeneratorAgent, CriticAgent
-from src.rag_evaluation.graph_pipeline import MultiAgentRAGPipeline
-from src.rag_evaluation.ragas_metrics import context_precision, context_recall
+from src.ml_validation.model_trainer import train_complaint_classifier
 from src.quality_gates.gate_checker import QualityGate
+from src.rag_evaluation.agents import CriticAgent, GeneratorAgent, RetrieverAgent
+from src.rag_evaluation.fixtures import RAG_GOLDEN_DATASET, RAG_KNOWLEDGE_BASE
+from src.rag_evaluation.graph_pipeline import MultiAgentRAGPipeline
+from src.rag_evaluation.llm_client import MockLLM
+from src.rag_evaluation.ragas_metrics import (
+    answer_relevancy_score,
+    context_precision,
+    context_recall,
+    faithfulness_score,
+)
+from src.rag_evaluation.retriever import TfidfRetriever
+
+logger = get_logger("QualityGatesCLI")
 
 
 def run_ml_gate(gate: QualityGate) -> None:
@@ -33,48 +44,75 @@ def run_ml_gate(gate: QualityGate) -> None:
     gate.require_min("ML: precision", report.precision, settings.ml_gate.min_precision)
     gate.require_min("ML: recall", report.recall, settings.ml_gate.min_recall)
     gate.require_min("ML: f1", report.f1, settings.ml_gate.min_f1)
-    gate.require_min("ML: bootstrap CI lower bound", report.ci_lower, settings.ml_gate.min_ci_lower_bound_accuracy)
+    gate.require_min(
+        "ML: bootstrap CI lower bound",
+        report.ci_lower,
+        settings.ml_gate.min_ci_lower_bound_accuracy,
+    )
 
 
 def run_rag_gate(gate: QualityGate) -> None:
-    knowledge_base = [
-        Document("doc-1", "Playwright is a Python and JavaScript framework for reliable end-to-end browser testing."),
-        Document("doc-2", "PyTest is a Python testing framework that supports fixtures and parametrization."),
-        Document("doc-3", "RAGAS is an evaluation framework for RAG pipelines, scoring faithfulness and relevancy."),
-        Document("doc-4", "LangGraph orchestrates multi agent workflows as a state graph with conditional routing."),
-        Document("doc-5", "A quality gate is an automated CI/CD checkpoint that blocks releases below thresholds."),
-    ]
-    golden_dataset = [
-        {"question": "What is Playwright used for?", "relevant_doc_ids": {"doc-1"}},
-        {"question": "What does RAGAS evaluate?", "relevant_doc_ids": {"doc-3"}},
-        {"question": "What is a quality gate?", "relevant_doc_ids": {"doc-5"}},
-    ]
+    if not RAG_GOLDEN_DATASET:
+        raise ValueError("RAG golden dataset must not be empty")
 
-    retriever = TfidfRetriever(knowledge_base)
+    retriever = TfidfRetriever(list(RAG_KNOWLEDGE_BASE))
     pipeline = MultiAgentRAGPipeline(
         retriever_agent=RetrieverAgent(retriever, top_k=1),
         generator_agent=GeneratorAgent(MockLLM()),
-        critic_agent=CriticAgent(faithfulness_threshold=0.15, relevancy_threshold=0.1),
+        critic_agent=CriticAgent(
+            faithfulness_threshold=settings.rag_gate.critic_faithfulness,
+            relevancy_threshold=settings.rag_gate.critic_relevancy,
+        ),
     )
 
-    precisions, recalls = [], []
-    for case in golden_dataset:
+    precisions, recalls, faithfulnesses, relevancies = [], [], [], []
+    for case in RAG_GOLDEN_DATASET:
         state = pipeline.run(case["question"])
         retrieved_ids = [d.doc_id for d in state.retrieved_docs]
         precisions.append(context_precision(retrieved_ids, case["relevant_doc_ids"]))
         recalls.append(context_recall(retrieved_ids, case["relevant_doc_ids"]))
+        faithfulnesses.append(faithfulness_score(state.answer, state.context))
+        relevancies.append(answer_relevancy_score(state.answer, state.question))
+
+    if not precisions:
+        raise ValueError("RAG gate produced no metric samples")
 
     avg_precision = sum(precisions) / len(precisions)
     avg_recall = sum(recalls) / len(recalls)
+    avg_faithfulness = sum(faithfulnesses) / len(faithfulnesses)
+    avg_relevancy = sum(relevancies) / len(relevancies)
 
-    gate.require_min("RAG: avg context precision", avg_precision, settings.rag_gate.min_context_precision)
-    gate.require_min("RAG: avg context recall", avg_recall, settings.rag_gate.min_context_recall)
+    gate.require_min(
+        "RAG: avg context precision",
+        avg_precision,
+        settings.rag_gate.min_context_precision,
+    )
+    gate.require_min(
+        "RAG: avg context recall",
+        avg_recall,
+        settings.rag_gate.min_context_recall,
+    )
+    # Offline TF-IDF mock judge scores are lower than real LLM judges; use critic thresholds.
+    gate.require_min(
+        "RAG: avg faithfulness (mock judge)",
+        avg_faithfulness,
+        settings.rag_gate.critic_faithfulness,
+    )
+    gate.require_min(
+        "RAG: avg answer relevancy (mock judge)",
+        avg_relevancy,
+        settings.rag_gate.critic_relevancy,
+    )
 
 
 def main() -> int:
     gate = QualityGate()
-    run_ml_gate(gate)
-    run_rag_gate(gate)
+    try:
+        run_ml_gate(gate)
+        run_rag_gate(gate)
+    except Exception:
+        logger.exception("Quality gate execution failed")
+        return 1
 
     report = gate.evaluate()
     print("\n" + "=" * 60)

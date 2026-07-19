@@ -68,6 +68,12 @@ class CriticAgent:
     """Scores the draft answer and decides whether it clears the bar."""
 
     def __init__(self, faithfulness_threshold: float = 0.5, relevancy_threshold: float = 0.4):
+        for name, value in (
+            ("faithfulness_threshold", faithfulness_threshold),
+            ("relevancy_threshold", relevancy_threshold),
+        ):
+            if not 0.0 <= value <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1 inclusive, got {value}")
         self.faithfulness_threshold = faithfulness_threshold
         self.relevancy_threshold = relevancy_threshold
 

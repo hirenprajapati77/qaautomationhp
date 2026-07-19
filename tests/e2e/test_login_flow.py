@@ -8,6 +8,8 @@ before first run.
 
 Demonstrates: "End-to-End (E2E) Testing" and "Playwright" from the CV.
 """
+from __future__ import annotations
+
 import pytest
 from playwright.sync_api import sync_playwright
 
@@ -18,16 +20,22 @@ VALID_USER = "tomsmith"
 VALID_PASS = "SuperSecretPassword!"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def browser_page():
     with sync_playwright() as p:
         browser = getattr(p, settings.e2e.browser).launch(headless=settings.e2e.headless)
-        page = browser.new_page()
-        yield page
-        browser.close()
+        context = browser.new_context()
+        page = context.new_page()
+        page.set_default_timeout(settings.e2e.default_timeout_ms)
+        try:
+            yield page
+        finally:
+            context.close()
+            browser.close()
 
 
 @pytest.mark.e2e
+@pytest.mark.herokuapp
 class TestLoginFlow:
 
     def test_successful_login(self, browser_page):
