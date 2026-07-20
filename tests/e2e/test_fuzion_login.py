@@ -62,7 +62,7 @@ class TestFuzionLoginFlow:
         login_page = FuzionLoginPage(browser_page).open()
         login_page.login(VALID_USER, VALID_PASS)
 
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
         assert login_page.is_logged_in(), "User should be redirected to the /app-preference page"
 
     def test_password_visibility_toggle(self, browser_page):
@@ -106,7 +106,7 @@ class TestFuzionLoginFlow:
 
         browser_page.keyboard.press("Enter")
 
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
         assert login_page.is_logged_in()
 
     def test_password_case_sensitivity(self, browser_page):
@@ -120,7 +120,7 @@ class TestFuzionLoginFlow:
         assert "/login" in browser_page.url
 
         login_page.login(VALID_USER, VALID_PASS)
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
         assert login_page.is_logged_in()
 
     # ==========================================
@@ -174,7 +174,7 @@ class TestFuzionLoginFlow:
         browser_page.wait_for_url("**/login", timeout=settings.e2e.default_timeout_ms)
 
         login_page.login(VALID_USER, VALID_PASS)
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
         assert login_page.is_logged_in(), "Account should not be locked after only 2 failed attempts."
 
     def test_excessive_long_input(self, browser_page):
@@ -198,7 +198,7 @@ class TestFuzionLoginFlow:
         """TC-EDG-01: Browser Back button after Logout"""
         login_page = FuzionLoginPage(browser_page).open()
         login_page.login(VALID_USER, VALID_PASS)
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
 
         browser_page.context.clear_cookies()
         browser_page.evaluate("window.localStorage.clear(); window.sessionStorage.clear();")
@@ -216,7 +216,7 @@ class TestFuzionLoginFlow:
         """TC-EDG-02: Browser Back button after Login"""
         login_page = FuzionLoginPage(browser_page).open()
         login_page.login(VALID_USER, VALID_PASS)
-        browser_page.wait_for_url("**/app-preference", timeout=15000)
+        browser_page.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
 
         browser_page.go_back()
         browser_page.wait_for_load_state("domcontentloaded")
@@ -234,18 +234,18 @@ class TestFuzionLoginFlow:
                 page1.set_default_timeout(settings.e2e.default_timeout_ms)
                 login_page1 = FuzionLoginPage(page1).open()
                 login_page1.login(VALID_USER, VALID_PASS)
-                page1.wait_for_url("**/app-preference", timeout=15000)
+                page1.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
                 assert login_page1.is_logged_in()
 
                 page2 = ctx2.new_page()
                 page2.set_default_timeout(settings.e2e.default_timeout_ms)
                 login_page2 = FuzionLoginPage(page2).open()
                 login_page2.login(VALID_USER, VALID_PASS)
-                page2.wait_for_url("**/app-preference", timeout=15000)
+                page2.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
                 assert login_page2.is_logged_in()
 
                 page1.reload()
-                page1.wait_for_url("**/app-preference", timeout=15000)
+                page1.wait_for_url("**/app-preference", timeout=settings.e2e.default_timeout_ms)
                 assert "app-preference" in page1.url, "First session should remain valid"
             finally:
                 ctx1.close()
